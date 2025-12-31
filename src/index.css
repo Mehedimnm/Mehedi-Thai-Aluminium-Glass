@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- ১. কালপুরুষ ফন্ট সেটআপ (এটি যেমন আছে তেমনই থাকবে) --- */
+@font-face {
+  font-family: 'Kalpurush';
+  src: url('./assets/fonts/Kalpurush.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* --- ২. বডি স্টাইল আপডেট --- */
+body {
+  /* ✅ ফিক্স: ইংরেজি আগে, বাংলা পরে */
+  font-family: ui-sans-serif, system-ui, sans-serif, 'Kalpurush';
+}
+
+/* --- ৩. প্রিন্ট স্টাইল (অপরিবর্তিত) --- */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #invoice-print-area, #invoice-print-area * {
+    visibility: visible;
+  }
+
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  #invoice-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding-left: 10mm !important;
+    padding-right: 15mm !important; 
+    padding-top: 10mm !important;
+    padding-bottom: 10mm !important;
+    background: white;
+    z-index: 9999;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    height: 297mm;
+    overflow: hidden;
+  }
+}
