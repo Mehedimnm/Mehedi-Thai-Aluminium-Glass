@@ -58,13 +58,9 @@ const InvoiceList = ({ onEdit }) => {
     });
   };
 
-  // ✅ Fix: Edit handler with navigation
+  // ✅ Fix: Edit handler - navigate to create-invoice with state
   const handleEdit = (invoice) => {
-    if (onEdit) {
-      onEdit(invoice);
-    } else {
-      navigate('/create-invoice', { state: { editData: invoice } });
-    }
+    navigate('/create-invoice', { state: { editData: invoice } });
   };
 
   const filteredInvoices = invoices.filter(inv => 
@@ -124,13 +120,14 @@ const InvoiceList = ({ onEdit }) => {
       </div>
 
       {/* --- TABLE AREA --- */}
-      <div className="flex-1 overflow-auto custom-scrollbar p-2">
+      {/* ✅ Fix: p-2 সরিয়ে দেওয়া হয়েছে যাতে gap না থাকে */}
+      <div className="flex-1 overflow-auto custom-scrollbar">
         
         {/* min-w-[1100px] to accommodate new column */}
         <table className="w-full text-left border-collapse min-w-[1100px]">
-          {/* ✅ Fix: Added bg-white to thead to prevent content showing through */}
-          <thead className="sticky top-0 z-10 bg-white">
-            <tr className="bg-gray-50 border-b border-gray-200">
+          {/* ✅ Fix: bg-white যোগ করা হয়েছে এবং shadow দেওয়া হয়েছে */}
+          <thead className="sticky top-0 z-10">
+            <tr className="bg-gray-50 border-b border-gray-200 shadow-sm">
               <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap first:pl-8 bg-gray-50">Date & ID</th>
               <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap bg-gray-50">Customer Info</th>
               <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap bg-gray-50">Items</th>
@@ -197,7 +194,7 @@ const InvoiceList = ({ onEdit }) => {
                       <button onClick={() => handlePrint(item)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition border border-transparent hover:border-gray-200">
                         <Printer className="w-4 h-4" />
                       </button>
-                      {/* ✅ Fix: Changed onClick to use handleEdit function */}
+                      {/* ✅ Fix: Edit button */}
                       <button onClick={() => handleEdit(item)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition border border-transparent hover:border-gray-200">
                         <Pencil className="w-4 h-4" />
                       </button>

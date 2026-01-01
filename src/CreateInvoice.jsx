@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, Search, Plus, Trash2, ShoppingCart, 
@@ -92,8 +92,12 @@ const PremiumDropdown = ({ options = [], value, onChange, placeholder, icon: Ico
 };
 
 // --- মেইন কম্পোনেন্ট ---
-const CreateInvoice = ({ editData }) => {
+const CreateInvoice = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // ✅ Fix: useLocation থেকে editData নেওয়া হচ্ছে
+  const editData = location.state?.editData || null;
   
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -113,7 +117,7 @@ const CreateInvoice = ({ editData }) => {
   // Description Modal State
   const [showDescModal, setShowDescModal] = useState(false);
   const [selectedDescItems, setSelectedDescItems] = useState([]);
-  const [modalSearch, setModalSearch] = useState(''); // পপআপের সার্চ
+  const [modalSearch, setModalSearch] = useState('');
 
   // Invoice Specific States
   const [discount, setDiscount] = useState(0);
@@ -176,7 +180,6 @@ const CreateInvoice = ({ editData }) => {
         return;
     }
     
-    // ✅ ফিক্স: সিরিয়াল নাম্বারের বদলে * মার্ক ব্যবহার করা হয়েছে
     const formattedText = selectedDescItems.map(item => `* ${item}`).join('\n');
     
     setDescription(prev => prev ? prev + '\n' + formattedText : formattedText);
@@ -295,6 +298,8 @@ const CreateInvoice = ({ editData }) => {
       setSelectedCustomer(''); 
       setEditingInvoiceId(null); 
       setCurrentInvoiceNo(null);
+      // ✅ Fix: Clear the location state when resetting
+      navigate('/create-invoice', { replace: true });
   };
   
   const showMessage = (type, text) => { setMessage({ type, text }); setTimeout(() => setMessage(null), 3000); };
