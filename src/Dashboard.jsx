@@ -8,7 +8,7 @@ import {
   Layers, Receipt, Files, TrendingUp, Clock, ArrowUpRight,
   Box, UserCheck, Briefcase, HandCoins, History, X, Camera,
   User, Mail, Phone, Lock, Eye, EyeOff, Save, CheckCircle, XCircle,
-  Shield, BadgeCheck, Key
+  Shield, BadgeCheck, Key, Settings
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -743,210 +743,195 @@ const Dashboard = ({ onLogout }) => {
         )}
       </AnimatePresence>
 
-      {/* ✅ FIXED: Professional Admin Profile Modal (Split Layout) */}
+      {/* ✅ FIXED & REDESIGNED: Admin Profile Modal */}
       <AnimatePresence>
         {showProfileModal && (
           <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[10000] flex items-center justify-center p-4"
             onClick={handleCloseProfileModal}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              transition={{ type: "spring", duration: 0.4 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden max-h-[90vh]"
+              className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl flex overflow-hidden border border-slate-100"
             >
-              {/* Sidebar (Left) */}
-              <div className="w-full md:w-1/3 bg-slate-900 p-6 flex flex-col items-center justify-center text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-slate-800/50" 
-                  style={{ backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0)`, backgroundSize: '24px 24px' }} 
-                />
-                
-                <div className="relative z-10">
-                  <div className="relative inline-block mb-4">
-                    <div className="w-24 h-24 rounded-2xl bg-slate-800 border-4 border-slate-700 overflow-hidden shadow-2xl">
-                       {profileForm.avatar ? (
+              {/* Left Sidebar (Minimal) */}
+              <div className="w-56 bg-slate-50 border-r border-slate-100 flex flex-col p-6">
+                {/* Avatar */}
+                <div className="flex flex-col items-center mb-8">
+                  <div className="relative group cursor-pointer mb-3" onClick={() => fileInputRef.current?.click()}>
+                    <div className="w-20 h-20 rounded-full bg-slate-200 overflow-hidden shadow-sm border-2 border-white">
+                      {profileForm.avatar ? (
                         <img src={profileForm.avatar} alt="Admin" className="w-full h-full object-cover" />
                       ) : adminData.avatar ? (
                         <img src={adminData.avatar} alt="Admin" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white text-3xl font-bold bg-slate-800">
+                        <div className="w-full h-full flex items-center justify-center bg-slate-800 text-white text-2xl font-bold">
                           {adminData.name?.charAt(0)}
                         </div>
                       )}
                     </div>
-                    <button 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="absolute -bottom-2 -right-2 p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors shadow-lg"
-                    >
-                      <Camera className="w-4 h-4" />
-                    </button>
+                    {/* Hover Overlay Icon */}
+                    <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="w-6 h-6 text-white" />
+                    </div>
                     <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
                   </div>
-                  
-                  <h3 className="text-white font-bold text-lg">{adminData.name}</h3>
-                  <div className="flex items-center justify-center gap-1.5 mt-1">
-                    <BadgeCheck className="w-4 h-4 text-emerald-500" />
-                    <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">{adminData.role}</span>
-                  </div>
+                  <h3 className="text-sm font-bold text-slate-800 text-center truncate w-full">{adminData.name}</h3>
+                  <p className="text-xs text-slate-500 font-medium">{adminData.role}</p>
                 </div>
 
-                <div className="relative z-10 w-full mt-8 space-y-2">
+                {/* Navigation */}
+                <div className="space-y-1">
                   <button
                     onClick={() => setProfileTab('profile')}
-                    className={`w-full py-3 px-4 rounded-xl text-sm font-semibold flex items-center gap-3 transition-all ${
-                      profileTab === 'profile' 
-                        ? 'bg-white text-slate-900 shadow-lg' 
-                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      profileTab === 'profile'
+                        ? 'bg-slate-900 text-white shadow-md'
+                        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     <User className="w-4 h-4" />
-                    <span>Profile Info</span>
+                    Profile
                   </button>
                   <button
                     onClick={() => setProfileTab('password')}
-                    className={`w-full py-3 px-4 rounded-xl text-sm font-semibold flex items-center gap-3 transition-all ${
-                      profileTab === 'password' 
-                        ? 'bg-white text-slate-900 shadow-lg' 
-                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      profileTab === 'password'
+                        ? 'bg-slate-900 text-white shadow-md'
+                        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
-                    <Key className="w-4 h-4" />
-                    <span>Security</span>
+                    <Shield className="w-4 h-4" />
+                    Security
                   </button>
                 </div>
               </div>
 
-              {/* Content (Right) */}
-              <div className="flex-1 p-8 bg-white overflow-y-auto">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-slate-800">
-                    {profileTab === 'profile' ? 'Edit Profile' : 'Change Password'}
+              {/* Right Content */}
+              <div className="flex-1 p-8 bg-white overflow-y-auto max-h-[80vh]">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-xl font-bold text-slate-900">
+                    {profileTab === 'profile' ? 'Profile Settings' : 'Password & Security'}
                   </h2>
-                  <button onClick={handleCloseProfileModal} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                  <button 
+                    onClick={handleCloseProfileModal} 
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+                  >
                     <X className="w-5 h-5 text-slate-400" />
                   </button>
                 </div>
 
                 {profileTab === 'profile' ? (
                   <div className="space-y-5">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    {/* Minimal Input Style */}
+                    <div className="space-y-4">
+                      <div className="group">
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Full Name</label>
                         <input
                           type="text"
                           value={profileForm.name}
                           onChange={(e) => handleProfileInputChange('name', e.target.value)}
-                          className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:bg-white focus:border-slate-800 focus:ring-0 transition-all outline-none"
+                          className="w-full px-4 py-3 bg-slate-50 border-b-2 border-slate-200 focus:border-slate-900 rounded-t-lg transition-colors outline-none text-sm font-semibold text-slate-800 placeholder-slate-400"
+                          placeholder="Your full name"
                         />
                       </div>
-                    </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 uppercase">Email Address</label>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <div className="group">
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Email</label>
                         <input
                           type="email"
                           value={profileForm.email}
                           onChange={(e) => handleProfileInputChange('email', e.target.value)}
-                          className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:bg-white focus:border-slate-800 focus:ring-0 transition-all outline-none"
+                          className="w-full px-4 py-3 bg-slate-50 border-b-2 border-slate-200 focus:border-slate-900 rounded-t-lg transition-colors outline-none text-sm font-semibold text-slate-800 placeholder-slate-400"
+                          placeholder="name@example.com"
                         />
                       </div>
-                    </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 uppercase">Phone Number</label>
-                      <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <div className="group">
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Phone</label>
                         <input
                           type="text"
                           value={profileForm.phone}
                           onChange={(e) => handleProfileInputChange('phone', e.target.value)}
-                          className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:bg-white focus:border-slate-800 focus:ring-0 transition-all outline-none"
+                          className="w-full px-4 py-3 bg-slate-50 border-b-2 border-slate-200 focus:border-slate-900 rounded-t-lg transition-colors outline-none text-sm font-semibold text-slate-800 placeholder-slate-400"
+                          placeholder="+880..."
                         />
                       </div>
                     </div>
 
-                    <div className="pt-4">
+                    <div className="pt-4 flex justify-end">
                       <button
                         onClick={handleSaveProfile}
                         disabled={saving}
-                        className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-slate-900/10"
+                        className="px-6 py-3 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20 disabled:opacity-70 flex items-center gap-2"
                       >
-                        {saving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Save Changes'}
+                        {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> Save Changes</>}
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-5">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 uppercase">Current Password</label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <div className="space-y-4">
+                      <div className="group relative">
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Current Password</label>
                         <input
                           type={showPasswords.current ? "text" : "password"}
                           value={passwordForm.currentPassword}
                           onChange={(e) => handlePasswordInputChange('currentPassword', e.target.value)}
-                          className="w-full pl-12 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:bg-white focus:border-slate-800 focus:ring-0 transition-all outline-none"
+                          className="w-full px-4 py-3 bg-slate-50 border-b-2 border-slate-200 focus:border-slate-900 rounded-t-lg transition-colors outline-none text-sm font-semibold text-slate-800"
                         />
                         <button 
                           onClick={() => setShowPasswords({...showPasswords, current: !showPasswords.current})}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                          className="absolute right-3 top-8 text-slate-400 hover:text-slate-600"
                         >
                           {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
-                    </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 uppercase">New Password</label>
-                      <div className="relative">
-                        <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <div className="group relative">
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">New Password</label>
                         <input
                           type={showPasswords.new ? "text" : "password"}
                           value={passwordForm.newPassword}
                           onChange={(e) => handlePasswordInputChange('newPassword', e.target.value)}
-                          className="w-full pl-12 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:bg-white focus:border-slate-800 focus:ring-0 transition-all outline-none"
+                          className="w-full px-4 py-3 bg-slate-50 border-b-2 border-slate-200 focus:border-slate-900 rounded-t-lg transition-colors outline-none text-sm font-semibold text-slate-800"
                         />
-                        <button 
+                         <button 
                           onClick={() => setShowPasswords({...showPasswords, new: !showPasswords.new})}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                          className="absolute right-3 top-8 text-slate-400 hover:text-slate-600"
                         >
                           {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
-                    </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 uppercase">Confirm Password</label>
-                      <div className="relative">
-                        <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <div className="group relative">
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Confirm Password</label>
                         <input
                           type={showPasswords.confirm ? "text" : "password"}
                           value={passwordForm.confirmPassword}
                           onChange={(e) => handlePasswordInputChange('confirmPassword', e.target.value)}
-                          className="w-full pl-12 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:bg-white focus:border-slate-800 focus:ring-0 transition-all outline-none"
+                          className="w-full px-4 py-3 bg-slate-50 border-b-2 border-slate-200 focus:border-slate-900 rounded-t-lg transition-colors outline-none text-sm font-semibold text-slate-800"
                         />
-                        <button 
+                         <button 
                           onClick={() => setShowPasswords({...showPasswords, confirm: !showPasswords.confirm})}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                          className="absolute right-3 top-8 text-slate-400 hover:text-slate-600"
                         >
                           {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
                     </div>
 
-                    <div className="pt-4">
+                    <div className="pt-4 flex justify-end">
                       <button
                         onClick={handleChangePassword}
                         disabled={saving}
-                        className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-slate-900/10"
+                        className="px-6 py-3 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20 disabled:opacity-70 flex items-center gap-2"
                       >
-                        {saving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Update Password'}
+                         {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Shield className="w-4 h-4" /> Update Password</>}
                       </button>
                     </div>
                   </div>
