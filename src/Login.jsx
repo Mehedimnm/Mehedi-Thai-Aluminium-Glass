@@ -33,7 +33,7 @@ const Login = ({ onLogin }) => {
     setIsLoading(true);
 
     try {
-      const result = await axios.post('http://localhost:3001/login', { username, password });
+      const result = await axios.post('/login', { username, password });
       
       if (result.data === "Success") {
         setToast({ type: 'success', text: 'Login Successful! Please wait...' });
