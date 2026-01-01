@@ -580,7 +580,8 @@ const Dashboard = ({ onLogout }) => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} fontWeight={600} tickLine={false} axisLine={false} />
                 <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`} />
-                <Tooltip content={<CustomTooltip />} />
+                {/* ✅ FIX: cursor={false} to remove the vertical line/gray block if needed */}
+                <Tooltip content={<CustomTooltip />} cursor={false} />
                 <Area type="monotone" dataKey="sales" name="Sales" stroke="#1e293b" strokeWidth={2.5} fill="url(#salesGrad)" />
                 <Area type="monotone" dataKey="paid" name="Paid" stroke="#10b981" strokeWidth={2.5} fill="url(#paidGrad)" />
               </AreaChart>
@@ -642,7 +643,11 @@ const Dashboard = ({ onLogout }) => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                 <XAxis type="number" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`} />
                 <YAxis type="category" dataKey="name" stroke="#94a3b8" fontSize={11} fontWeight={600} width={80} tickLine={false} axisLine={false} />
-                <Tooltip formatter={(value) => `BDT ${Number(value).toLocaleString()}`} />
+                {/* ✅ FIX: cursor={{ fill: 'transparent' }} REMOVES THE GRAY BACKGROUND */}
+                <Tooltip 
+                  cursor={{ fill: 'transparent' }} 
+                  formatter={(value) => `BDT ${Number(value).toLocaleString()}`} 
+                />
                 <Bar dataKey="value" name="Value" fill="#1e293b" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
