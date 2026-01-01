@@ -6,13 +6,92 @@ import {
   Lock,
   ArrowRight,
   CheckCircle,
-  XCircle,
-  Layers,
   AlertTriangle,
+  Layers,
   Eye,
   EyeOff,
-  Sparkles
+  ShieldCheck
 } from 'lucide-react';
+
+// ✅ SOLUTION: InputField কে Login কম্পোনেন্টের বাইরে নিয়ে আসা হয়েছে
+// এর ফলে টাইপ করার সময় আর ফোকাস হারাবে না (Keyboard Reset Fix)
+const InputField = ({ 
+  name, 
+  type, 
+  label, 
+  icon: Icon, 
+  value, 
+  onChange, 
+  isPasswordToggle = false,
+  showPassword,
+  setShowPassword,
+  focused,
+  setFocused
+}) => {
+  const isFocused = focused === name;
+  const hasValue = value.length > 0;
+  const isActive = isFocused || hasValue;
+
+  return (
+    <div className="relative mb-6 group">
+      {/* Container */}
+      <div className={`
+        relative flex items-center overflow-hidden rounded-2xl border-2 transition-all duration-300
+        ${isFocused 
+          ? 'border-slate-900 bg-white shadow-lg shadow-slate-200' 
+          : 'border-slate-100 bg-slate-50 hover:border-slate-300'
+        }
+      `}>
+        
+        {/* Icon Section */}
+        <div className={`pl-5 pr-3 transition-colors duration-300 ${isFocused ? 'text-slate-900' : 'text-slate-400'}`}>
+          <Icon className="w-6 h-6" />
+        </div>
+
+        {/* Floating Label & Input Area */}
+        <div className="relative flex-1 h-[60px]">
+          {/* Floating Label Animation */}
+          <motion.label
+            initial={false}
+            animate={{
+              y: isActive ? 8 : 18,
+              scale: isActive ? 0.75 : 1,
+              originX: 0,
+              color: isFocused ? '#0f172a' : '#94a3b8' // Slate-900 when focused
+            }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute left-0 font-bold uppercase tracking-wider pointer-events-none z-10"
+          >
+            {label}
+          </motion.label>
+
+          {/* Actual Input */}
+          <input
+            name={name}
+            type={type}
+            value={value}
+            onChange={onChange}
+            onFocus={() => setFocused(name)}
+            onBlur={() => setFocused(null)}
+            className="w-full h-full pt-6 pb-2 bg-transparent border-none outline-none text-slate-900 font-extrabold text-lg placeholder-transparent z-20 relative"
+            autoComplete="off"
+          />
+        </div>
+
+        {/* Password Toggle Button */}
+        {isPasswordToggle && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="pr-5 pl-2 text-slate-400 hover:text-slate-900 transition-colors outline-none focus:outline-none z-30"
+          >
+            {showPassword ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({ username: '', password: '' });
@@ -22,183 +101,91 @@ const Login = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [shake, setShake] = useState(false);
 
-  // ইনপুট হ্যান্ডেল করা
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (shake) setShake(false); // টাইপ শুরু করলে শেক বন্ধ হবে
+    if (shake) setShake(false);
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setToast(null);
 
-    // ভ্যালিডেশন
     if (!formData.username.trim() || !formData.password.trim()) {
       setShake(true);
       setTimeout(() => setShake(false), 500);
-      setToast({ type: 'warning', text: 'Please fill in all fields!' });
+      setToast({ type: 'warning', text: 'Please enter username & password!' });
       return;
     }
 
     setIsLoading(true);
     try {
       const res = await axios.post('/login', formData);
-      
       if (res.data === 'Success') {
-        setToast({ type: 'success', text: 'Access Granted! Redirecting...' });
+        setToast({ type: 'success', text: 'Login Successful! Please wait...' });
         setTimeout(() => onLogin(), 1500);
       } else {
         setShake(true);
         setTimeout(() => setShake(false), 500);
-        setToast({ type: 'error', text: 'Invalid Credentials!' });
+        setToast({ type: 'error', text: 'Wrong Username or Password!' });
       }
     } catch {
-      setToast({ type: 'error', text: 'Server Error! Please try again.' });
+      setToast({ type: 'error', text: 'Server Error! Check connection.' });
     }
     setIsLoading(false);
   };
 
-  // --- 🔥 ULTRA MODERN INPUT COMPONENT ---
-  const InputField = ({ 
-    name, 
-    type, 
-    label, 
-    icon: Icon, 
-    value, 
-    onChange, 
-    isPasswordToggle = false 
-  }) => {
-    const isFocused = focused === name;
-    const hasValue = value.length > 0;
-    const isActive = isFocused || hasValue;
-
-    return (
-      <div className="relative mb-6 group">
-        {/* Animated Background Glow (ফোকাস করলে জ্বলে উঠবে) */}
-        <div 
-          className={`absolute -inset-0.5 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 rounded-2xl blur opacity-0 transition duration-500 group-hover:opacity-30 ${isFocused ? 'opacity-100 group-hover:opacity-100' : ''}`}
-        />
-        
-        {/* Main Input Container */}
-        <div className="relative bg-white rounded-xl p-[2px]">
-          <div className="relative bg-slate-50 rounded-[10px] flex items-center overflow-hidden">
-            
-            {/* Icon Section */}
-            <div className="pl-4 pr-2">
-              <Icon 
-                className={`w-5 h-5 transition-colors duration-300 ${
-                  isFocused ? 'text-blue-600' : 'text-slate-400'
-                }`} 
-              />
-            </div>
-
-            {/* Floating Label & Input */}
-            <div className="relative flex-1 h-14">
-              {/* Floating Label Animation */}
-              <motion.label
-                initial={false}
-                animate={{
-                  y: isActive ? -8 : 0,
-                  x: isActive ? 0 : 0,
-                  scale: isActive ? 0.85 : 1,
-                  color: isFocused ? '#2563eb' : '#94a3b8'
-                }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="absolute left-0 top-4 text-slate-400 font-medium origin-top-left pointer-events-none"
-              >
-                {label}
-              </motion.label>
-
-              {/* Actual Input */}
-              <input
-                name={name}
-                type={type}
-                value={value}
-                onChange={onChange}
-                onFocus={() => setFocused(name)}
-                onBlur={() => setFocused(null)}
-                className="w-full h-full pt-4 pb-1 bg-transparent border-none outline-none text-slate-800 font-bold placeholder-transparent z-10 relative"
-                autoComplete="off"
-              />
-            </div>
-
-            {/* Password Toggle Button */}
-            {isPasswordToggle && (
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="pr-4 pl-2 text-slate-400 hover:text-slate-600 transition-colors outline-none focus:outline-none"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f1f5f9] relative overflow-hidden font-sans selection:bg-blue-500 selection:text-white">
-
-      {/* --- Toast Notification --- */}
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] relative overflow-hidden font-sans">
+      
+      {/* Toast Notification */}
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, y: -50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 20, scale: 1 }}
-            exit={{ opacity: 0, y: -50, scale: 0.9 }}
-            className="fixed top-0 z-50 flex items-center gap-3 bg-white/90 backdrop-blur-md px-6 py-4 rounded-2xl shadow-2xl border border-white/50"
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 30 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-0 z-50 flex items-center gap-3 bg-white px-6 py-4 rounded-xl shadow-2xl border-l-4 border-slate-900"
           >
-            <div className={`p-2 rounded-full ${
-              toast.type === 'success' ? 'bg-green-100 text-green-600' : 
-              toast.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
+            <div className={`p-1 rounded-full ${
+              toast.type === 'success' ? 'text-green-600' : 
+              toast.type === 'error' ? 'text-red-600' : 'text-amber-600'
             }`}>
-              {toast.type === 'success' && <CheckCircle className="w-5 h-5" />}
-              {toast.type === 'error' && <AlertTriangle className="w-5 h-5" />}
-              {toast.type === 'warning' && <Sparkles className="w-5 h-5" />}
+              {toast.type === 'success' ? <CheckCircle className="w-6 h-6" /> : <AlertTriangle className="w-6 h-6" />}
             </div>
-            <div>
-              <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide">{toast.type}</h4>
-              <p className="text-xs text-slate-500 font-medium">{toast.text}</p>
-            </div>
+            <p className="font-bold text-slate-800 text-sm">{toast.text}</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* --- Animated Background Elements --- */}
-      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-300/30 rounded-full blur-[120px] animate-pulse-subtle" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-300/30 rounded-full blur-[120px] animate-pulse-subtle" style={{ animationDelay: '1s' }} />
-
-      {/* --- Main Card --- */}
+      {/* Main Card */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
-        className="relative w-full max-w-[420px] z-10 mx-4"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full max-w-[400px] mx-4 relative z-10"
       >
         <motion.div 
-          animate={shake ? { x: [-5, 5, -5, 5, 0] } : {}}
-          transition={{ duration: 0.4 }}
-          className="bg-white/80 backdrop-blur-2xl p-8 sm:p-10 rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] border border-white/60"
+          animate={shake ? { x: [-8, 8, -8, 8, 0] } : {}}
+          transition={{ duration: 0.3 }}
+          className="bg-white p-8 md:p-10 rounded-[30px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)]"
         >
-          {/* Header */}
+          {/* Header - ORIGINAL NAME & COLOR */}
           <div className="text-center mb-10">
-            <motion.div 
-              whileHover={{ rotate: 180, scale: 1.1 }}
-              transition={{ duration: 0.5 }}
-              className="w-20 h-20 bg-gradient-to-tr from-slate-900 to-slate-700 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-900/20"
-            >
+            <div className="w-20 h-20 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-slate-900/30">
               <Layers className="w-10 h-10 text-white" />
-            </motion.div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-              MEHEDI <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">ERP</span>
+            </div>
+            <h1 className="text-2xl font-black text-slate-900 uppercase leading-tight tracking-tight">
+              MEHEDI THAI <br />
+              <span className="text-slate-500 text-lg">ALUMINUM & GLASS</span>
             </h1>
-            <p className="text-slate-400 font-medium text-sm mt-2">Enterprise Resource Planning</p>
+            <div className="flex items-center justify-center gap-2 mt-3 opacity-60">
+              <ShieldCheck className="w-4 h-4 text-slate-600" />
+              <p className="text-xs font-bold text-slate-600 uppercase tracking-widest">Enterprise ERP Login</p>
+            </div>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-2">
+          <form onSubmit={handleLogin} className="space-y-4">
             
             <InputField 
               name="username"
@@ -207,6 +194,8 @@ const Login = ({ onLogin }) => {
               icon={User}
               value={formData.username}
               onChange={handleChange}
+              focused={focused}
+              setFocused={setFocused}
             />
 
             <InputField 
@@ -217,37 +206,37 @@ const Login = ({ onLogin }) => {
               value={formData.password}
               onChange={handleChange}
               isPasswordToggle={true}
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
+              focused={focused}
+              setFocused={setFocused}
             />
 
-            {/* Login Button with Magnetic Effect */}
+            {/* Submit Button - SOLID BLACK */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={isLoading}
-              className="w-full mt-6 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-lg shadow-slate-900/30 transition-all relative overflow-hidden group"
+              className="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-5 rounded-2xl shadow-xl shadow-slate-900/20 transition-all flex items-center justify-center gap-3 group"
             >
-              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
               {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Processing...</span>
-                </div>
+                <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <span className="flex items-center justify-center gap-2 relative z-10">
-                  Sign In to Dashboard <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </span>
+                <>
+                  <span className="text-lg">SECURE LOGIN</span>
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
               )}
             </motion.button>
-
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-              Secure System by <span className="text-slate-800">Mehedi Hasan</span>
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+              Developed by <span className="text-slate-900">MEHEDI HASAN</span>
             </p>
           </div>
-
         </motion.div>
       </motion.div>
     </div>
