@@ -6,15 +6,13 @@ import {
   Lock,
   ArrowRight,
   CheckCircle,
+  XCircle,
   AlertTriangle,
   Layers,
-  Eye,
-  EyeOff,
   ShieldCheck
 } from 'lucide-react';
 
-// ✅ SOLUTION: InputField কে Login কম্পোনেন্টের বাইরে নিয়ে আসা হয়েছে
-// এর ফলে টাইপ করার সময় আর ফোকাস হারাবে না (Keyboard Reset Fix)
+// --- ইনপুট ফিল্ড কম্পোনেন্ট (Green Glow + No Eye Icon) ---
 const InputField = ({ 
   name, 
   type, 
@@ -22,10 +20,7 @@ const InputField = ({
   icon: Icon, 
   value, 
   onChange, 
-  isPasswordToggle = false,
-  showPassword,
-  setShowPassword,
-  focused,
+  focused, 
   setFocused
 }) => {
   const isFocused = focused === name;
@@ -38,13 +33,13 @@ const InputField = ({
       <div className={`
         relative flex items-center overflow-hidden rounded-2xl border-2 transition-all duration-300
         ${isFocused 
-          ? 'border-slate-900 bg-white shadow-lg shadow-slate-200' 
+          ? 'border-green-500 bg-white shadow-[0_0_20px_rgba(34,197,94,0.4)]' // ✅ GREEN GLOW EFFECT
           : 'border-slate-100 bg-slate-50 hover:border-slate-300'
         }
       `}>
         
         {/* Icon Section */}
-        <div className={`pl-5 pr-3 transition-colors duration-300 ${isFocused ? 'text-slate-900' : 'text-slate-400'}`}>
+        <div className={`pl-5 pr-3 transition-colors duration-300 ${isFocused ? 'text-green-600' : 'text-slate-400'}`}>
           <Icon className="w-6 h-6" />
         </div>
 
@@ -57,7 +52,7 @@ const InputField = ({
               y: isActive ? 8 : 18,
               scale: isActive ? 0.75 : 1,
               originX: 0,
-              color: isFocused ? '#0f172a' : '#94a3b8' // Slate-900 when focused
+              color: isFocused ? '#15803d' : '#94a3b8' // Focused হলে গাঢ় সবুজ টেক্সট
             }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="absolute left-0 font-bold uppercase tracking-wider pointer-events-none z-10"
@@ -73,21 +68,10 @@ const InputField = ({
             onChange={onChange}
             onFocus={() => setFocused(name)}
             onBlur={() => setFocused(null)}
-            className="w-full h-full pt-6 pb-2 bg-transparent border-none outline-none text-slate-900 font-extrabold text-lg placeholder-transparent z-20 relative"
+            className="w-full h-full pt-6 pb-2 pr-4 bg-transparent border-none outline-none text-slate-900 font-extrabold text-lg placeholder-transparent z-20 relative"
             autoComplete="off"
           />
         </div>
-
-        {/* Password Toggle Button */}
-        {isPasswordToggle && (
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="pr-5 pl-2 text-slate-400 hover:text-slate-900 transition-colors outline-none focus:outline-none z-30"
-          >
-            {showPassword ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
-          </button>
-        )}
       </div>
     </div>
   );
@@ -98,7 +82,6 @@ const Login = ({ onLogin }) => {
   const [focused, setFocused] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
   const [shake, setShake] = useState(false);
 
   const handleChange = (e) => {
@@ -110,10 +93,12 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
     setToast(null);
 
+    // ভ্যালিডেশন
     if (!formData.username.trim() || !formData.password.trim()) {
       setShake(true);
       setTimeout(() => setShake(false), 500);
       setToast({ type: 'warning', text: 'Please enter username & password!' });
+      setTimeout(() => setToast(null), 3000);
       return;
     }
 
@@ -126,10 +111,12 @@ const Login = ({ onLogin }) => {
       } else {
         setShake(true);
         setTimeout(() => setShake(false), 500);
-        setToast({ type: 'error', text: 'Wrong Username or Password!' });
+        setToast({ type: 'error', text: 'Incorrect Username or Password!' });
+        setTimeout(() => setToast(null), 3000);
       }
     } catch {
-      setToast({ type: 'error', text: 'Server Error! Check connection.' });
+      setToast({ type: 'error', text: 'Network Error! Try again.' });
+      setTimeout(() => setToast(null), 3000);
     }
     setIsLoading(false);
   };
@@ -137,27 +124,37 @@ const Login = ({ onLogin }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] relative overflow-hidden font-sans">
       
-      {/* Toast Notification */}
+      {/* --- উন্নত মানের টোস্ট মেসেজ (আপনার পছন্দের ডিজাইন) --- */}
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 30 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="fixed top-0 z-50 flex items-center gap-3 bg-white px-6 py-4 rounded-xl shadow-2xl border-l-4 border-slate-900"
+            initial={{ opacity: 0, y: -40, x: '-50%' }}
+            animate={{ opacity: 1, y: 24, x: '-50%' }}
+            exit={{ opacity: 0, y: -40, x: '-50%' }}
+            className="fixed top-0 left-1/2 z-[10000] flex items-center gap-3 bg-white px-6 py-4 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] min-w-[340px] border border-slate-100"
           >
-            <div className={`p-1 rounded-full ${
-              toast.type === 'success' ? 'text-green-600' : 
-              toast.type === 'error' ? 'text-red-600' : 'text-amber-600'
+            {/* আইকন বক্স */}
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              toast.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 
+              toast.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
             }`}>
-              {toast.type === 'success' ? <CheckCircle className="w-6 h-6" /> : <AlertTriangle className="w-6 h-6" />}
+              {toast.type === 'success' && <CheckCircle className="w-5 h-5" />}
+              {toast.type === 'error' && <XCircle className="w-5 h-5" />}
+              {toast.type === 'warning' && <AlertTriangle className="w-5 h-5" />}
             </div>
-            <p className="font-bold text-slate-800 text-sm">{toast.text}</p>
+            
+            {/* টেক্সট */}
+            <div>
+              <p className="font-bold text-slate-800 text-sm">
+                {toast.type === 'success' ? 'Success' : toast.type === 'error' ? 'Error' : 'Warning'}
+              </p>
+              <p className="text-xs font-medium text-slate-500 mt-0.5">{toast.text}</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Main Card */}
+      {/* --- মেইন লগিন কার্ড --- */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -169,7 +166,7 @@ const Login = ({ onLogin }) => {
           transition={{ duration: 0.3 }}
           className="bg-white p-8 md:p-10 rounded-[30px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)]"
         >
-          {/* Header - ORIGINAL NAME & COLOR */}
+          {/* হেডার */}
           <div className="text-center mb-10">
             <div className="w-20 h-20 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-slate-900/30">
               <Layers className="w-10 h-10 text-white" />
@@ -184,12 +181,12 @@ const Login = ({ onLogin }) => {
             </div>
           </div>
 
-          {/* Form */}
+          {/* ফর্ম */}
           <form onSubmit={handleLogin} className="space-y-4">
             
             <InputField 
               name="username"
-              type="text"
+              type="text" // ইউজারনেম দেখা যাবে
               label="Username"
               icon={User}
               value={formData.username}
@@ -200,19 +197,16 @@ const Login = ({ onLogin }) => {
 
             <InputField 
               name="password"
-              type={showPassword ? "text" : "password"}
+              type="password" // পাসওয়ার্ড লুকানো থাকবে (Eye Icon নেই)
               label="Password"
               icon={Lock}
               value={formData.password}
               onChange={handleChange}
-              isPasswordToggle={true}
-              showPassword={showPassword}
-              setShowPassword={setShowPassword}
               focused={focused}
               setFocused={setFocused}
             />
 
-            {/* Submit Button - SOLID BLACK */}
+            {/* সাবমিট বাটন - সলিড ব্ল্যাক */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -231,7 +225,7 @@ const Login = ({ onLogin }) => {
             </motion.button>
           </form>
 
-          {/* Footer */}
+          {/* ফুটার */}
           <div className="mt-8 text-center">
             <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
               Developed by <span className="text-slate-900">MEHEDI HASAN</span>
