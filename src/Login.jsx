@@ -26,7 +26,6 @@ const PremiumInput = ({
   isError
 }) => {
   const isFocused = focused === name;
-  const hasValue = value.length > 0;
 
   return (
     <div className="relative">
@@ -38,9 +37,9 @@ const PremiumInput = ({
         {label}
       </label>
       
-      {/* Input Container */}
+      {/* Input Container - ✅ No underline */}
       <div className={`
-        relative flex items-center rounded-2xl transition-all duration-300
+        relative flex items-center rounded-2xl transition-all duration-300 overflow-hidden
         ${isError 
           ? 'bg-red-50 ring-2 ring-red-400/50' 
           : isFocused
@@ -65,10 +64,7 @@ const PremiumInput = ({
           onFocus={() => setFocused(name)}
           onBlur={() => setFocused(null)}
           placeholder={`Enter your ${label.toLowerCase()}`}
-          className={`
-            flex-1 py-[18px] pr-5 bg-transparent outline-none font-semibold text-[15px] text-slate-800
-            placeholder-slate-400/70 transition-all duration-300
-          `}
+          className="flex-1 py-[18px] pr-5 bg-transparent outline-none font-semibold text-[15px] text-slate-800 placeholder-slate-400/70"
           autoComplete="off"
         />
 
@@ -82,17 +78,6 @@ const PremiumInput = ({
             <AlertTriangle className="w-5 h-5 text-red-400" />
           </motion.div>
         )}
-
-        {/* Focus Indicator Line */}
-        <div className={`
-          absolute bottom-0 left-4 right-4 h-[2px] rounded-full transition-all duration-500
-          ${isError 
-            ? 'bg-red-400 scale-x-100' 
-            : isFocused 
-              ? 'bg-slate-800 scale-x-100' 
-              : 'bg-slate-300 scale-x-0'
-          }
-        `} />
       </div>
     </div>
   );
@@ -124,7 +109,6 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
     setToast(null);
 
-    // Validation
     const newErrors = {
       username: !formData.username.trim(),
       password: !formData.password.trim()
@@ -161,7 +145,7 @@ const Login = ({ onLogin }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f1f5f9] relative overflow-hidden font-sans p-4">
       
-      {/* Toast Notification */}
+      {/* Toast Notification - ✅ Fixed Progress Bar */}
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -171,10 +155,8 @@ const Login = ({ onLogin }) => {
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed top-0 left-1/2 z-[10000]"
           >
-            <div className={`
-              flex items-center gap-4 bg-white pl-4 pr-6 py-4 rounded-2xl min-w-[320px] md:min-w-[380px]
-              shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-slate-100/80
-            `}>
+            <div className="relative flex items-center gap-4 bg-white pl-4 pr-6 py-4 rounded-2xl min-w-[320px] md:min-w-[380px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-slate-100/80 overflow-hidden">
+              
               {/* Icon */}
               <div className={`
                 w-12 h-12 rounded-xl flex items-center justify-center shrink-0
@@ -198,14 +180,15 @@ const Login = ({ onLogin }) => {
                 <p className="text-xs text-slate-500 mt-0.5 truncate">{toast.text}</p>
               </div>
 
-              {/* Progress Bar for auto-dismiss */}
+              {/* ✅ Progress Bar - Now matches rounded corners */}
               {toast.type !== 'success' && (
                 <motion.div 
                   initial={{ scaleX: 1 }}
                   animate={{ scaleX: 0 }}
                   transition={{ duration: 3.5, ease: 'linear' }}
+                  style={{ originX: 0 }}
                   className={`
-                    absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl origin-left
+                    absolute bottom-0 left-0 right-0 h-[3px] rounded-b-2xl
                     ${toast.type === 'error' ? 'bg-red-400' : 'bg-amber-400'}
                   `}
                 />
@@ -218,10 +201,6 @@ const Login = ({ onLogin }) => {
       {/* Background Shapes */}
       <div className="absolute top-[-15%] left-[-8%] w-[50%] md:w-[35%] aspect-square bg-slate-200/60 rounded-full blur-[100px]" />
       <div className="absolute bottom-[-15%] right-[-8%] w-[50%] md:w-[35%] aspect-square bg-slate-300/50 rounded-full blur-[100px]" />
-      
-      {/* Decorative Elements */}
-      <div className="absolute top-[20%] right-[10%] w-2 h-2 bg-slate-400/30 rounded-full hidden md:block" />
-      <div className="absolute bottom-[30%] left-[15%] w-3 h-3 bg-slate-400/20 rounded-full hidden md:block" />
 
       {/* Main Card */}
       <motion.div
@@ -314,11 +293,7 @@ const Login = ({ onLogin }) => {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={isLoading}
-              className={`
-                w-full mt-8 bg-slate-900 hover:bg-slate-800 text-white font-bold text-[15px] py-[18px] rounded-2xl
-                shadow-xl shadow-slate-900/25 transition-all duration-300 flex items-center justify-center gap-3
-                disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden group
-              `}
+              className="w-full mt-8 bg-slate-900 hover:bg-slate-800 text-white font-bold text-[15px] py-[18px] rounded-2xl shadow-xl shadow-slate-900/25 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden group"
             >
               {/* Button Shine Effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
@@ -344,7 +319,7 @@ const Login = ({ onLogin }) => {
               Developed by <span className="text-slate-700 font-bold">MEHEDI HASAN</span>
             </p>
             <p className="text-[9px] text-slate-300 mt-1">
-              © {new Date().getFullYear()} All Rights Reserved
+              © 2026 All Rights Reserved
             </p>
           </div>
         </motion.div>
