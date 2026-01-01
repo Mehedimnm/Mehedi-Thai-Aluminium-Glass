@@ -3,17 +3,16 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search, Trash2, Pencil, Printer, 
-  FileText, CheckCircle, XCircle, Filter 
+  FileSpreadsheet, CheckCircle, XCircle, Filter 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const QuotationList = ({ onEdit }) => {
+const QuotationList = () => {
   const navigate = useNavigate();
   const [quotations, setQuotations] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   
-  // Modal & Toast States
   const [deleteId, setDeleteId] = useState(null);
   const [message, setMessage] = useState(null);
 
@@ -59,6 +58,11 @@ const QuotationList = ({ onEdit }) => {
     });
   };
 
+  // ✅ Fix: Edit handler - navigate to create-quotation with state
+  const handleEdit = (quotation) => {
+    navigate('/create-quotation', { state: { editData: quotation } });
+  };
+
   const filteredQuotations = quotations.filter(q => 
     (q.quotationNo && q.quotationNo.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (q.customer?.name && q.customer.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -75,14 +79,14 @@ const QuotationList = ({ onEdit }) => {
             initial={{ opacity: 0, y: -50, x: '-50%' }}
             animate={{ opacity: 1, y: 20, x: '-50%' }}
             exit={{ opacity: 0, y: -50, x: '-50%' }}
-            className={`fixed top-0 left-1/2 z-[10000] flex items-center gap-3 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl border border-slate-700/50`}
+            className="fixed top-0 left-1/2 z-[10000] flex items-center gap-3 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl border border-slate-700/50"
           >
             <div className={`p-2 rounded-full ${message.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
               {message.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
             </div>
             <div>
-              <h4 className="font-bold text-slate-800 text-sm">{message.type === 'success' ? 'Success!' : 'Error!'}</h4>
-              <p className="text-xs text-gray-500 font-medium">{message.text}</p>
+              <h4 className="font-bold text-white text-sm">{message.type === 'success' ? 'Success!' : 'Error!'}</h4>
+              <p className="text-xs text-gray-300 font-medium">{message.text}</p>
             </div>
           </motion.div>
         )}
@@ -91,12 +95,12 @@ const QuotationList = ({ onEdit }) => {
       {/* --- HEADER --- */}
       <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-20">
         <div className="flex items-center gap-4 w-full md:w-auto">
-          <div className="p-3 bg-gray-100 text-slate-700 rounded-xl border border-gray-200">
-            <FileText className="w-6 h-6" />
+          <div className="p-3 bg-orange-50 text-orange-600 rounded-xl border border-orange-100">
+            <FileSpreadsheet className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Quotation List</h2>
-            <p className="text-gray-500 text-sm font-medium">{quotations.length} Records Found</p>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Quotation History</h2>
+            <p className="text-gray-500 text-sm font-medium">{quotations.length} Total Records</p>
           </div>
         </div>
         
@@ -116,16 +120,18 @@ const QuotationList = ({ onEdit }) => {
       </div>
 
       {/* --- TABLE AREA --- */}
-      <div className="flex-1 overflow-x-auto custom-scrollbar p-2">
-        {/* min-w-[1000px] ensures horizontal scroll on mobile, preventing text break */}
-        <table className="w-full text-left border-collapse min-w-[1000px]">
+      {/* ✅ Fix: p-2 সরিয়ে দেওয়া হয়েছে যাতে gap না থাকে */}
+      <div className="flex-1 overflow-auto custom-scrollbar">
+        
+        <table className="w-full text-left border-collapse min-w-[900px]">
+          {/* ✅ Fix: shadow-sm যোগ করা হয়েছে এবং প্রতিটি th তে bg-gray-50 */}
           <thead className="sticky top-0 z-10">
-            <tr className="bg-gray-50/90 backdrop-blur-sm border-b border-gray-200">
-              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap first:pl-8">Date & QT No</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Customer Info</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Items</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right whitespace-nowrap">Total Amount</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right last:pr-8 whitespace-nowrap">Actions</th>
+            <tr className="bg-gray-50 border-b border-gray-200 shadow-sm">
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap first:pl-8 bg-gray-50">Date & ID</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap bg-gray-50">Customer Info</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap bg-gray-50">Items</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right whitespace-nowrap bg-gray-50">Total Amount</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right last:pr-8 whitespace-nowrap bg-gray-50">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 text-sm">
@@ -140,7 +146,7 @@ const QuotationList = ({ onEdit }) => {
                   {/* Date & ID */}
                   <td className="px-6 py-4 whitespace-nowrap first:pl-8">
                     <div className="font-bold text-slate-900">{item.quotationNo}</div>
-                    <div className="text-[11px] text-gray-400 font-bold uppercase mt-0.5">{new Date(item.date).toLocaleDateString('en-GB')}</div>
+                    <div className="text-[11px] text-gray-400 font-bold uppercase mt-0.5">{new Date(item.date || item.createdAt).toLocaleDateString('en-GB')}</div>
                   </td>
 
                   {/* Customer */}
@@ -151,12 +157,12 @@ const QuotationList = ({ onEdit }) => {
 
                   {/* Items */}
                   <td className="px-6 py-4 text-center whitespace-nowrap">
-                    <span className="bg-gray-100 text-slate-700 px-3 py-1 rounded text-xs font-bold border border-gray-200">
+                    <span className="bg-orange-50 text-orange-700 px-3 py-1 rounded text-xs font-bold border border-orange-100">
                         {item.items?.length || 0}
                     </span>
                   </td>
 
-                  {/* Amount */}
+                  {/* Grand Total */}
                   <td className="px-6 py-4 text-right whitespace-nowrap">
                     <span className="font-bold text-slate-900">৳ {item.payment?.grandTotal?.toLocaleString()}</span>
                   </td>
@@ -167,7 +173,8 @@ const QuotationList = ({ onEdit }) => {
                       <button onClick={() => handlePrint(item)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition border border-transparent hover:border-gray-200">
                         <Printer className="w-4 h-4" />
                       </button>
-                      <button onClick={() => onEdit(item)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition border border-transparent hover:border-gray-200">
+                      {/* ✅ Fix: Edit button */}
+                      <button onClick={() => handleEdit(item)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition border border-transparent hover:border-gray-200">
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button onClick={() => setDeleteId(item._id)} className="p-2 rounded-lg text-slate-400 hover:bg-gray-100 hover:text-slate-800 transition border border-transparent hover:border-gray-200">
@@ -200,7 +207,7 @@ const QuotationList = ({ onEdit }) => {
               <div className="flex gap-3">
                 <button 
                     onClick={() => setDeleteId(null)} 
-                    className="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50"
+                    className="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 transition"
                 >
                     Cancel
                 </button>

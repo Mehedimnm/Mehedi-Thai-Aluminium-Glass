@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, Search, Plus, Trash2, ShoppingCart, 
@@ -39,7 +39,6 @@ const PremiumDropdown = ({ options = [], value, onChange, placeholder, icon: Ico
     <div className="relative w-full group" ref={dropdownRef}>
       <div 
         onClick={() => setIsOpen(!isOpen)} 
-        // ✅ ফিক্সড হাইট: h-[52px] এবং py-0 flex items-center
         className={`flex items-center justify-between bg-white border-2 rounded-xl px-4 h-[52px] cursor-pointer transition-all duration-300 ${isOpen ? 'border-orange-500 ring-4 ring-orange-500/10' : 'border-gray-100 hover:border-gray-200'}`}
       >
         <div className="flex items-center gap-3 overflow-hidden w-full">
@@ -93,8 +92,12 @@ const PremiumDropdown = ({ options = [], value, onChange, placeholder, icon: Ico
 };
 
 // --- মেইন কম্পোনেন্ট ---
-const CreateQuotation = ({ editData }) => {
+const CreateQuotation = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // ✅ Fix: useLocation থেকে editData নেওয়া হচ্ছে
+  const editData = location.state?.editData || null;
   
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -166,7 +169,6 @@ const CreateQuotation = ({ editData }) => {
         return;
     }
     
-    // ✅ ফিক্স: সিরিয়াল নাম্বারের বদলে * মার্ক ব্যবহার করা হয়েছে
     const formattedText = selectedDescItems.map(item => `* ${item}`).join('\n');
     
     setDescription(prev => prev ? prev + '\n' + formattedText : formattedText);
@@ -282,6 +284,8 @@ const CreateQuotation = ({ editData }) => {
       setSelectedCustomer(''); 
       setEditingQuotationId(null); 
       setCurrentQuotationNo(null);
+      // ✅ Fix: Clear the location state when resetting
+      navigate('/create-quotation', { replace: true });
   };
   
   const showMessage = (type, text) => { setMessage({ type, text }); setTimeout(() => setMessage(null), 3000); };
