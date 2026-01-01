@@ -1,331 +1,257 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+import React, { useState } from 'react';
+import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  User,
+  Lock,
+  ArrowRight,
+  CheckCircle,
+  XCircle,
+  Layers,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Sparkles
+} from 'lucide-react';
 
-/* --- 1. Kalpurush Font Setup --- */
-@font-face {
-  font-family: 'Kalpurush';
-  src: url('./assets/fonts/Kalpurush.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
+const Login = ({ onLogin }) => {
+  const [formData, setFormData] = useState({ username: '', password: '' });
+  const [focused, setFocused] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [shake, setShake] = useState(false);
 
-/* --- 2. Body Style --- */
-body {
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Kalpurush';
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  // ইনপুট হ্যান্ডেল করা
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (shake) setShake(false); // টাইপ শুরু করলে শেক বন্ধ হবে
+  };
 
-/* --- 3. Hide Scrollbar Completely --- */
-.scrollbar-hide {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setToast(null);
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
+    // ভ্যালিডেশন
+    if (!formData.username.trim() || !formData.password.trim()) {
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      setToast({ type: 'warning', text: 'Please fill in all fields!' });
+      return;
+    }
 
-/* Global Scrollbar Hide */
-*::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
+    setIsLoading(true);
+    try {
+      const res = await axios.post('/login', formData);
+      
+      if (res.data === 'Success') {
+        setToast({ type: 'success', text: 'Access Granted! Redirecting...' });
+        setTimeout(() => onLogin(), 1500);
+      } else {
+        setShake(true);
+        setTimeout(() => setShake(false), 500);
+        setToast({ type: 'error', text: 'Invalid Credentials!' });
+      }
+    } catch {
+      setToast({ type: 'error', text: 'Server Error! Please try again.' });
+    }
+    setIsLoading(false);
+  };
 
-* {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+  // --- 🔥 ULTRA MODERN INPUT COMPONENT ---
+  const InputField = ({ 
+    name, 
+    type, 
+    label, 
+    icon: Icon, 
+    value, 
+    onChange, 
+    isPasswordToggle = false 
+  }) => {
+    const isFocused = focused === name;
+    const hasValue = value.length > 0;
+    const isActive = isFocused || hasValue;
 
-/* --- 4. Smooth Scroll --- */
-html {
-  scroll-behavior: smooth;
-}
+    return (
+      <div className="relative mb-6 group">
+        {/* Animated Background Glow (ফোকাস করলে জ্বলে উঠবে) */}
+        <div 
+          className={`absolute -inset-0.5 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 rounded-2xl blur opacity-0 transition duration-500 group-hover:opacity-30 ${isFocused ? 'opacity-100 group-hover:opacity-100' : ''}`}
+        />
+        
+        {/* Main Input Container */}
+        <div className="relative bg-white rounded-xl p-[2px]">
+          <div className="relative bg-slate-50 rounded-[10px] flex items-center overflow-hidden">
+            
+            {/* Icon Section */}
+            <div className="pl-4 pr-2">
+              <Icon 
+                className={`w-5 h-5 transition-colors duration-300 ${
+                  isFocused ? 'text-blue-600' : 'text-slate-400'
+                }`} 
+              />
+            </div>
 
-/* --- 5. Selection Color --- */
-::selection {
-  background-color: #1e293b;
-  color: #ffffff;
-}
+            {/* Floating Label & Input */}
+            <div className="relative flex-1 h-14">
+              {/* Floating Label Animation */}
+              <motion.label
+                initial={false}
+                animate={{
+                  y: isActive ? -8 : 0,
+                  x: isActive ? 0 : 0,
+                  scale: isActive ? 0.85 : 1,
+                  color: isFocused ? '#2563eb' : '#94a3b8'
+                }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="absolute left-0 top-4 text-slate-400 font-medium origin-top-left pointer-events-none"
+              >
+                {label}
+              </motion.label>
 
-::-moz-selection {
-  background-color: #1e293b;
-  color: #ffffff;
-}
+              {/* Actual Input */}
+              <input
+                name={name}
+                type={type}
+                value={value}
+                onChange={onChange}
+                onFocus={() => setFocused(name)}
+                onBlur={() => setFocused(null)}
+                className="w-full h-full pt-4 pb-1 bg-transparent border-none outline-none text-slate-800 font-bold placeholder-transparent z-10 relative"
+                autoComplete="off"
+              />
+            </div>
 
-/* --- 6. Focus Outline (UPDATED) --- */
-/* ইনপুট বাদে অন্য এলিমেন্টের জন্য এক্সেসিবিলিটি ঠিক রাখা হয়েছে */
-*:focus {
-  outline: none;
-}
+            {/* Password Toggle Button */}
+            {isPasswordToggle && (
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="pr-4 pl-2 text-slate-400 hover:text-slate-600 transition-colors outline-none focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-/* শুধুমাত্র বাটন বা লিংকের জন্য ফোকাস রিং থাকবে, ইনপুটের জন্য নয় */
-button:focus-visible, a:focus-visible {
-  outline: 2px solid #1e293b;
-  outline-offset: 2px;
-}
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#f1f5f9] relative overflow-hidden font-sans selection:bg-blue-500 selection:text-white">
 
-/* --- 7. Input Autofill Style --- */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #f8fafc inset !important;
-  -webkit-text-fill-color: #1e293b !important;
-  transition: background-color 5000s ease-in-out 0s;
-}
+      {/* --- Toast Notification --- */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 20, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.9 }}
+            className="fixed top-0 z-50 flex items-center gap-3 bg-white/90 backdrop-blur-md px-6 py-4 rounded-2xl shadow-2xl border border-white/50"
+          >
+            <div className={`p-2 rounded-full ${
+              toast.type === 'success' ? 'bg-green-100 text-green-600' : 
+              toast.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
+            }`}>
+              {toast.type === 'success' && <CheckCircle className="w-5 h-5" />}
+              {toast.type === 'error' && <AlertTriangle className="w-5 h-5" />}
+              {toast.type === 'warning' && <Sparkles className="w-5 h-5" />}
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide">{toast.type}</h4>
+              <p className="text-xs text-slate-500 font-medium">{toast.text}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-/* --- 8. Number Input Spinner Hide --- */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+      {/* --- Animated Background Elements --- */}
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-300/30 rounded-full blur-[120px] animate-pulse-subtle" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-300/30 rounded-full blur-[120px] animate-pulse-subtle" style={{ animationDelay: '1s' }} />
 
-input[type="number"] {
-  -moz-appearance: textfield;
-}
+      {/* --- Main Card --- */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
+        className="relative w-full max-w-[420px] z-10 mx-4"
+      >
+        <motion.div 
+          animate={shake ? { x: [-5, 5, -5, 5, 0] } : {}}
+          transition={{ duration: 0.4 }}
+          className="bg-white/80 backdrop-blur-2xl p-8 sm:p-10 rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] border border-white/60"
+        >
+          {/* Header */}
+          <div className="text-center mb-10">
+            <motion.div 
+              whileHover={{ rotate: 180, scale: 1.1 }}
+              transition={{ duration: 0.5 }}
+              className="w-20 h-20 bg-gradient-to-tr from-slate-900 to-slate-700 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-900/20"
+            >
+              <Layers className="w-10 h-10 text-white" />
+            </motion.div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+              MEHEDI <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">ERP</span>
+            </h1>
+            <p className="text-slate-400 font-medium text-sm mt-2">Enterprise Resource Planning</p>
+          </div>
 
-/* --- 9. Custom Animations --- */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-2">
+            
+            <InputField 
+              name="username"
+              type="text"
+              label="Username"
+              icon={User}
+              value={formData.username}
+              onChange={handleChange}
+            />
 
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(-20px); }
-  to { opacity: 1; transform: translateX(0); }
-}
+            <InputField 
+              name="password"
+              type={showPassword ? "text" : "password"}
+              label="Password"
+              icon={Lock}
+              value={formData.password}
+              onChange={handleChange}
+              isPasswordToggle={true}
+            />
 
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
+            {/* Login Button with Magnetic Effect */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={isLoading}
+              className="w-full mt-6 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-lg shadow-slate-900/30 transition-all relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Processing...</span>
+                </div>
+              ) : (
+                <span className="flex items-center justify-center gap-2 relative z-10">
+                  Sign In to Dashboard <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </span>
+              )}
+            </motion.button>
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
+          </form>
 
-.animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-.animate-slideIn { animation: slideIn 0.3s ease-out; }
-.animate-pulse-subtle { animation: pulse-subtle 2s ease-in-out infinite; }
-.animate-shimmer {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
+          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              Secure System by <span className="text-slate-800">Mehedi Hasan</span>
+            </p>
+          </div>
 
-/* --- 10. Glass Effect --- */
-.glass {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+};
 
-.glass-dark {
-  background: rgba(30, 41, 59, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-/* --- 11. Card Hover Effects --- */
-.card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* --- 12. Button Press Effect --- */
-.btn-press { transition: transform 0.1s ease; }
-.btn-press:active { transform: scale(0.98); }
-
-/* --- 13. Gradient Text --- */
-.gradient-text {
-  background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* --- 14. Border Gradient --- */
-.border-gradient {
-  border: 2px solid transparent;
-  background: linear-gradient(white, white) padding-box,
-              linear-gradient(135deg, #1e293b, #475569) border-box;
-}
-
-/* --- 15. Skeleton Loading --- */
-.skeleton {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 8px;
-}
-
-/* --- 16. Tooltip Style --- */
-.tooltip { position: relative; }
-.tooltip::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 100%; left: 50%;
-  transform: translateX(-50%);
-  padding: 6px 12px;
-  background: #1e293b; color: white;
-  font-size: 12px; font-weight: 500;
-  border-radius: 6px; white-space: nowrap;
-  opacity: 0; visibility: hidden;
-  transition: all 0.2s ease;
-  margin-bottom: 8px;
-}
-.tooltip:hover::after { opacity: 1; visibility: visible; }
-
-/* --- 17. Table Styles --- */
-.table-row-hover tr { transition: background-color 0.15s ease; }
-.table-row-hover tr:hover { background-color: #f8fafc; }
-
-/* --- 18. Form Input Focus Ring (Optional Custom) --- */
-.input-focus-ring { transition: all 0.2s ease; }
-.input-focus-ring:focus {
-  border-color: #1e293b;
-  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
-}
-
-/* --- 19. Badge Styles --- */
-.badge {
-  display: inline-flex; align-items: center;
-  padding: 4px 10px; font-size: 11px;
-  font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.5px; border-radius: 6px;
-}
-.badge-success { background-color: #ecfdf5; color: #059669; }
-.badge-warning { background-color: #fffbeb; color: #d97706; }
-.badge-danger { background-color: #fef2f2; color: #dc2626; }
-.badge-info { background-color: #f1f5f9; color: #475569; }
-
-/* --- 20. Custom Checkbox --- */
-.custom-checkbox {
-  appearance: none; -webkit-appearance: none;
-  width: 18px; height: 18px;
-  border: 2px solid #cbd5e1; border-radius: 4px;
-  cursor: pointer; transition: all 0.2s ease;
-}
-.custom-checkbox:checked {
-  background-color: #1e293b; border-color: #1e293b;
-  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
-}
-.custom-checkbox:hover { border-color: #94a3b8; }
-
-/* --- 21. Toggle Switch --- */
-.toggle-switch {
-  position: relative; width: 44px; height: 24px;
-  background-color: #cbd5e1; border-radius: 12px;
-  cursor: pointer; transition: background-color 0.3s ease;
-}
-.toggle-switch::after {
-  content: ''; position: absolute;
-  top: 2px; left: 2px; width: 20px; height: 20px;
-  background-color: white; border-radius: 50%;
-  transition: transform 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-.toggle-switch.active { background-color: #10b981; }
-.toggle-switch.active::after { transform: translateX(20px); }
-
-/* --- 22. Dropdown Animation --- */
-.dropdown-enter { opacity: 0; transform: translateY(-8px) scale(0.95); }
-.dropdown-enter-active { opacity: 1; transform: translateY(0) scale(1); transition: all 0.2s ease; }
-.dropdown-exit { opacity: 1; transform: translateY(0) scale(1); }
-.dropdown-exit-active { opacity: 0; transform: translateY(-8px) scale(0.95); transition: all 0.2s ease; }
-
-/* --- 23. Modal Backdrop --- */
-.modal-backdrop {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-
-/* --- 24. Progress Bar --- */
-.progress-bar {
-  height: 8px; background-color: #e2e8f0;
-  border-radius: 4px; overflow: hidden;
-}
-.progress-bar-fill {
-  height: 100%; background: linear-gradient(90deg, #10b981, #059669);
-  border-radius: 4px; transition: width 0.5s ease;
-}
-
-/* --- 25. Ripple Effect --- */
-.ripple { position: relative; overflow: hidden; }
-.ripple::before {
-  content: ''; position: absolute;
-  top: 50%; left: 50%; width: 0; height: 0;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%; transform: translate(-50%, -50%);
-  transition: width 0.6s ease, height 0.6s ease;
-}
-.ripple:active::before { width: 300px; height: 300px; }
-
-/* --- 26. Print Styles --- */
-@media print {
-  body * { visibility: hidden; }
-  #invoice-print-area, #invoice-print-area * { visibility: visible; }
-  @page { size: A4; margin: 0; }
-  #invoice-print-area {
-    position: absolute; left: 0; top: 0;
-    width: 210mm; height: 297mm; margin: 0;
-    padding: 10mm !important;
-    background: white; z-index: 9999; box-sizing: border-box;
-  }
-  html, body { height: 297mm; overflow: hidden; }
-  *::-webkit-scrollbar { display: none !important; }
-}
-
-/* --- 27. Responsive & Other Media Queries --- */
-@media (max-width: 640px) { html { font-size: 14px; } }
-@media (min-width: 1536px) { html { font-size: 16px; } }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-@media (prefers-contrast: high) { .high-contrast { border-width: 2px; } }
-
-/* ========================================= */
-/* --- 31. FORCE INPUT RESET (NEW FIX) --- */
-/* ========================================= */
-
-/* এই অংশটি আপনার ইনপুটের কালো বর্ডার রিমুভ করবে */
-input, textarea, select {
-  outline: none !important;
-  border: none !important; /* Tailwind border ছাড়া অন্য ডিফল্ট বর্ডার রিমুভ */
-}
-
-/* ফোকাস করার সময় ব্রাউজারের ডিফল্ট আউটলাইন বা রিং বন্ধ করা */
-input:focus,
-input:focus-visible,
-textarea:focus,
-textarea:focus-visible,
-select:focus,
-select:focus-visible {
-  outline: none !important;
-  box-shadow: none !important; /* প্রয়োজনে এটি রিমুভ করুন যদি কাস্টম শ্যাডো চলে যায়, তবে বর্ডারের জন্য এটি জরুরি */
-  border-color: transparent !important;
-}
-
-/* আপনার Login.jsx এর কাস্টম ইনপুট ডিজাইনের জন্য */
-/* আমরা box-shadow: none গ্লোবালি দিচ্ছি না যাতে আপনার inset shadow কাজ করে */
-/* কিন্তু ডিফল্ট আউটলাইন ১০০% বন্ধ থাকবে */
-input:focus {
-  outline: 0 !important;
-  outline-offset: 0 !important;
-}
+export default Login;
