@@ -10,17 +10,16 @@ const Login = ({ onLogin }) => {
   const [toast, setToast] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   
-  // Focus states for premium input effect
+  // Focus states
   const [focusedField, setFocusedField] = useState(null);
   
-  // Input error states
+  // Error states
   const [errors, setErrors] = useState({ username: false, password: false });
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setToast(null);
 
-    // Validation check
     const newErrors = {
       username: !username.trim(),
       password: !password.trim()
@@ -40,7 +39,6 @@ const Login = ({ onLogin }) => {
       
       if (result.data === "Success") {
         setToast({ type: 'success', text: 'Login Successful! Please wait...' });
-        
         setTimeout(() => {
           onLogin(); 
         }, 1500);
@@ -56,7 +54,6 @@ const Login = ({ onLogin }) => {
     setIsLoading(false);
   };
 
-  // Handle input change and remove error
   const handleInputChange = (field, value) => {
     if (field === 'username') setUsername(value);
     if (field === 'password') setPassword(value);
@@ -67,7 +64,7 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden font-sans">
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] relative overflow-hidden font-sans">
       
       {/* Toast Notification */}
       <AnimatePresence>
@@ -76,9 +73,9 @@ const Login = ({ onLogin }) => {
             initial={{ opacity: 0, y: -50, x: '-50%' }}
             animate={{ opacity: 1, y: 30, x: '-50%' }}
             exit={{ opacity: 0, y: -50, x: '-50%' }}
-            className="fixed top-0 left-1/2 z-[10000] flex items-center gap-3 bg-white px-5 py-4 rounded-2xl shadow-xl border border-slate-100"
+            className="fixed top-0 left-1/2 z-[10000] flex items-center gap-3 bg-white px-6 py-4 rounded-2xl shadow-xl shadow-slate-200 border border-slate-100 min-w-[320px]"
           >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+            <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${
               toast.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 
               toast.type === 'error' ? 'bg-red-100 text-red-600' : 
               'bg-amber-100 text-amber-600'
@@ -91,69 +88,61 @@ const Login = ({ onLogin }) => {
               <p className="font-bold text-slate-800 text-sm">
                 {toast.type === 'success' ? 'Success' : toast.type === 'error' ? 'Error' : 'Warning'}
               </p>
-              <p className="text-xs font-medium text-slate-500">{toast.text}</p>
+              <p className="text-xs font-medium text-slate-500 mt-0.5">{toast.text}</p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-slate-200/50 rounded-full blur-[100px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-slate-300/40 rounded-full blur-[100px]" />
-      </div>
+      {/* Original Background Effects */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-200/40 rounded-full blur-[120px]"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-200/40 rounded-full blur-[120px]"></div>
 
       {/* Login Card */}
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="bg-white border border-slate-200/60 p-10 rounded-3xl shadow-xl shadow-slate-200/50 w-full max-w-md relative z-10"
+        className="bg-white/70 backdrop-blur-xl border border-white/50 p-10 rounded-[40px] shadow-2xl w-full max-w-md relative z-10"
       >
         {/* Header */}
         <div className="text-center mb-10">
-          <motion.div 
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring" }}
-            className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-slate-900/25"
-          >
-            <Layers className="w-8 h-8 text-white" />
-          </motion.div>
+          <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-slate-900/20">
+            <Layers className="w-9 h-9 text-white" />
+          </div>
           
           <h1 className="text-xl font-black text-slate-900 uppercase tracking-wide leading-tight mb-2">
-            MEHEDI THAI <br/> 
-            <span className="text-slate-400 font-bold">ALUMINUM & GLASS</span>
+            MEHEDI THAI <br/> <span className="text-slate-500">ALUMINUM & GLASS</span>
           </h1>
           
-          <p className="text-slate-400 text-sm font-medium mt-2">Sign in to your account</p>
+          <p className="text-gray-400 text-sm font-medium mt-1">Enterprise ERP Login</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
           
-          {/* Username Input - Premium Design */}
+          {/* Username Input */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
               Username
             </label>
             <div 
-              className={`relative group transition-all duration-300 ${
+              className={`flex items-center bg-white rounded-2xl overflow-hidden transition-all duration-200 ${
                 errors.username 
-                  ? 'ring-2 ring-red-500/20' 
+                  ? 'ring-2 ring-red-400 border border-red-200' 
                   : focusedField === 'username' 
-                    ? 'ring-2 ring-slate-900/10' 
-                    : ''
+                    ? 'ring-2 ring-slate-300 border border-slate-200' 
+                    : 'border border-slate-200 hover:border-slate-300'
               }`}
             >
-              {/* Icon Container */}
-              <div className={`absolute left-0 top-0 bottom-0 w-14 flex items-center justify-center rounded-l-2xl transition-all duration-300 ${
+              {/* Icon Box */}
+              <div className={`w-14 h-14 flex items-center justify-center border-r transition-colors duration-200 ${
                 errors.username 
-                  ? 'bg-red-50' 
+                  ? 'bg-red-50 border-red-100' 
                   : focusedField === 'username' 
-                    ? 'bg-slate-100' 
-                    : 'bg-slate-50'
+                    ? 'bg-slate-100 border-slate-200' 
+                    : 'bg-slate-50 border-slate-100'
               }`}>
-                <User className={`w-5 h-5 transition-colors duration-300 ${
+                <User className={`w-5 h-5 transition-colors duration-200 ${
                   errors.username 
                     ? 'text-red-500' 
                     : focusedField === 'username' 
@@ -162,17 +151,11 @@ const Login = ({ onLogin }) => {
                 }`} />
               </div>
               
-              {/* Input Field */}
+              {/* Input */}
               <input 
                 type="text" 
                 placeholder="Enter your username" 
-                className={`w-full pl-16 pr-12 py-4 bg-slate-50 rounded-2xl font-semibold text-slate-800 placeholder-slate-300 outline-none transition-all duration-300 ${
-                  errors.username 
-                    ? 'bg-red-50/50 border-2 border-red-200' 
-                    : focusedField === 'username'
-                      ? 'bg-white border-2 border-slate-200'
-                      : 'border-2 border-transparent hover:bg-slate-100/70'
-                }`}
+                className="flex-1 h-14 px-4 bg-transparent outline-none font-semibold text-slate-800 placeholder-slate-300"
                 onChange={(e) => handleInputChange('username', e.target.value)}
                 onFocus={() => setFocusedField('username')}
                 onBlur={() => setFocusedField(null)}
@@ -181,40 +164,36 @@ const Login = ({ onLogin }) => {
               
               {/* Error Icon */}
               {errors.username && (
-                <motion.div 
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2"
-                >
+                <div className="pr-4">
                   <AlertTriangle className="w-5 h-5 text-red-500" />
-                </motion.div>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Password Input - Premium Design */}
+          {/* Password Input */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
               Password
             </label>
             <div 
-              className={`relative group transition-all duration-300 ${
+              className={`flex items-center bg-white rounded-2xl overflow-hidden transition-all duration-200 ${
                 errors.password 
-                  ? 'ring-2 ring-red-500/20' 
+                  ? 'ring-2 ring-red-400 border border-red-200' 
                   : focusedField === 'password' 
-                    ? 'ring-2 ring-slate-900/10' 
-                    : ''
+                    ? 'ring-2 ring-slate-300 border border-slate-200' 
+                    : 'border border-slate-200 hover:border-slate-300'
               }`}
             >
-              {/* Icon Container */}
-              <div className={`absolute left-0 top-0 bottom-0 w-14 flex items-center justify-center rounded-l-2xl transition-all duration-300 ${
+              {/* Icon Box */}
+              <div className={`w-14 h-14 flex items-center justify-center border-r transition-colors duration-200 ${
                 errors.password 
-                  ? 'bg-red-50' 
+                  ? 'bg-red-50 border-red-100' 
                   : focusedField === 'password' 
-                    ? 'bg-slate-100' 
-                    : 'bg-slate-50'
+                    ? 'bg-slate-100 border-slate-200' 
+                    : 'bg-slate-50 border-slate-100'
               }`}>
-                <Lock className={`w-5 h-5 transition-colors duration-300 ${
+                <Lock className={`w-5 h-5 transition-colors duration-200 ${
                   errors.password 
                     ? 'text-red-500' 
                     : focusedField === 'password' 
@@ -223,56 +202,40 @@ const Login = ({ onLogin }) => {
                 }`} />
               </div>
               
-              {/* Input Field */}
+              {/* Input */}
               <input 
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password" 
-                className={`w-full pl-16 pr-12 py-4 bg-slate-50 rounded-2xl font-semibold text-slate-800 placeholder-slate-300 outline-none transition-all duration-300 ${
-                  errors.password 
-                    ? 'bg-red-50/50 border-2 border-red-200' 
-                    : focusedField === 'password'
-                      ? 'bg-white border-2 border-slate-200'
-                      : 'border-2 border-transparent hover:bg-slate-100/70'
-                }`}
+                className="flex-1 h-14 px-4 bg-transparent outline-none font-semibold text-slate-800 placeholder-slate-300"
                 onChange={(e) => handleInputChange('password', e.target.value)}
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
                 value={password}
               />
               
-              {/* Show/Hide Password Toggle */}
+              {/* Error Icon */}
+              {errors.password && (
+                <div className="pr-2">
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                </div>
+              )}
+              
+              {/* Show/Hide Password */}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                className="pr-4 pl-2 h-14 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
               >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
-              
-              {/* Error Icon - Shows when error and password is hidden */}
-              {errors.password && (
-                <motion.div 
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="absolute right-12 top-1/2 -translate-y-1/2"
-                >
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                </motion.div>
-              )}
             </div>
           </div>
 
           {/* Submit Button */}
-          <motion.button 
+          <button 
             type="submit" 
             disabled={isLoading}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-lg shadow-slate-900/25 transition-all flex items-center justify-center gap-2 group mt-8 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-xl shadow-slate-900/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group mt-8 disabled:opacity-70"
           >
             {isLoading ? (
               <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -282,13 +245,13 @@ const Login = ({ onLogin }) => {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </>
             )}
-          </motion.button>
+          </button>
         </form>
 
         {/* Footer */}
-        <div className="mt-10 pt-6 border-t border-slate-100 text-center">
-          <p className="text-xs text-slate-400 font-medium">
-            Developed by <span className="text-slate-700 font-bold">MEHEDI HASAN</span>
+        <div className="mt-8 text-center">
+          <p className="text-xs text-gray-400 font-medium">
+            System Developed by <span className="text-slate-900 font-bold">MEHEDI HASAN</span>
           </p>
           <p className="text-[10px] text-slate-300 font-medium mt-1">
             © 2026 All Rights Reserved
