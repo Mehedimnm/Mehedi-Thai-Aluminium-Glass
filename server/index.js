@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path'); // ✅ Added for serving frontend
+const path = require('path'); 
 require('dotenv').config(); 
 
 const app = express();
@@ -383,10 +383,10 @@ app.delete('/delete-quotation/:id', async (req, res) => {
 
 
 // --- 6. Server Frontend (For Render) ---
-// ✅ This block serves the React frontend when deployed
+// ✅ Corrected: Using regex /(.*)/ instead of '*'
 app.use(express.static(path.join(__dirname, '../dist')));
 
-app.get('*', (req, res) => {
+app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
