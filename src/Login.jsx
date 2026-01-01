@@ -10,191 +10,245 @@ import {
   Layers,
   AlertTriangle,
   Eye,
-  EyeOff
+  EyeOff,
+  Sparkles
 } from 'lucide-react';
 
 const Login = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({ username: '', password: '' });
+  const [focused, setFocused] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState(null);
-  
-  // ✅ নতুন স্টেট: পাসওয়ার্ড দেখানো/লুকানো এবং ফোকাস ইফেক্টের জন্য
   const [showPassword, setShowPassword] = useState(false);
-  const [focusedField, setFocusedField] = useState(null);
-  
-  const [errors, setErrors] = useState({ username: false, password: false });
+  const [shake, setShake] = useState(false);
+
+  // ইনপুট হ্যান্ডেল করা
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (shake) setShake(false); // টাইপ শুরু করলে শেক বন্ধ হবে
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setToast(null);
 
     // ভ্যালিডেশন
-    const newErrors = {
-      username: !username.trim(),
-      password: !password.trim()
-    };
-    setErrors(newErrors);
-
-    if (newErrors.username || newErrors.password) {
-      setToast({ type: 'warning', text: 'Please enter username & password!' });
-      setTimeout(() => setToast(null), 3000);
+    if (!formData.username.trim() || !formData.password.trim()) {
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      setToast({ type: 'warning', text: 'Please fill in all fields!' });
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await axios.post('/login', { username, password }); // ✅ Render এর জন্য লিংক ফিক্স করা
+      const res = await axios.post('/login', formData);
       
       if (res.data === 'Success') {
-        setToast({ type: 'success', text: 'Login Successful! Please wait...' });
+        setToast({ type: 'success', text: 'Access Granted! Redirecting...' });
         setTimeout(() => onLogin(), 1500);
       } else {
-        setToast({ type: 'error', text: 'Incorrect Username or Password!' });
-        setTimeout(() => setToast(null), 3000);
+        setShake(true);
+        setTimeout(() => setShake(false), 500);
+        setToast({ type: 'error', text: 'Invalid Credentials!' });
       }
     } catch {
-      setToast({ type: 'error', text: 'Network Error! Try again.' });
-      setTimeout(() => setToast(null), 3000);
+      setToast({ type: 'error', text: 'Server Error! Please try again.' });
     }
     setIsLoading(false);
   };
 
-  // 🔥 সুপার মডার্ন ইনপুট স্টাইল জেনারেটর (বর্ডারের বদলে শ্যাডো)
-  const getInputClass = (fieldName) => {
-    const isError = errors[fieldName];
-    const isFocused = focusedField === fieldName;
-    
-    return `
-      relative flex items-center w-full rounded-2xl px-5 py-4 transition-all duration-300
-      ${isError 
-        ? 'bg-red-50/50 shadow-[inset_0_0_0_2px_rgba(248,113,113,0.3)]' 
-        : isFocused 
-          ? 'bg-white shadow-[inset_0_0_0_2px_rgba(15,23,42,0.15)] scale-[1.02]' 
-          : 'bg-slate-50/80 hover:bg-slate-100 shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]'
-      }
-    `;
+  // --- 🔥 ULTRA MODERN INPUT COMPONENT ---
+  const InputField = ({ 
+    name, 
+    type, 
+    label, 
+    icon: Icon, 
+    value, 
+    onChange, 
+    isPasswordToggle = false 
+  }) => {
+    const isFocused = focused === name;
+    const hasValue = value.length > 0;
+    const isActive = isFocused || hasValue;
+
+    return (
+      <div className="relative mb-6 group">
+        {/* Animated Background Glow (ফোকাস করলে জ্বলে উঠবে) */}
+        <div 
+          className={`absolute -inset-0.5 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 rounded-2xl blur opacity-0 transition duration-500 group-hover:opacity-30 ${isFocused ? 'opacity-100 group-hover:opacity-100' : ''}`}
+        />
+        
+        {/* Main Input Container */}
+        <div className="relative bg-white rounded-xl p-[2px]">
+          <div className="relative bg-slate-50 rounded-[10px] flex items-center overflow-hidden">
+            
+            {/* Icon Section */}
+            <div className="pl-4 pr-2">
+              <Icon 
+                className={`w-5 h-5 transition-colors duration-300 ${
+                  isFocused ? 'text-blue-600' : 'text-slate-400'
+                }`} 
+              />
+            </div>
+
+            {/* Floating Label & Input */}
+            <div className="relative flex-1 h-14">
+              {/* Floating Label Animation */}
+              <motion.label
+                initial={false}
+                animate={{
+                  y: isActive ? -8 : 0,
+                  x: isActive ? 0 : 0,
+                  scale: isActive ? 0.85 : 1,
+                  color: isFocused ? '#2563eb' : '#94a3b8'
+                }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="absolute left-0 top-4 text-slate-400 font-medium origin-top-left pointer-events-none"
+              >
+                {label}
+              </motion.label>
+
+              {/* Actual Input */}
+              <input
+                name={name}
+                type={type}
+                value={value}
+                onChange={onChange}
+                onFocus={() => setFocused(name)}
+                onBlur={() => setFocused(null)}
+                className="w-full h-full pt-4 pb-1 bg-transparent border-none outline-none text-slate-800 font-bold placeholder-transparent z-10 relative"
+                autoComplete="off"
+              />
+            </div>
+
+            {/* Password Toggle Button */}
+            {isPasswordToggle && (
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="pr-4 pl-2 text-slate-400 hover:text-slate-600 transition-colors outline-none focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] relative overflow-hidden font-sans">
+    <div className="min-h-screen flex items-center justify-center bg-[#f1f5f9] relative overflow-hidden font-sans selection:bg-blue-500 selection:text-white">
 
-      {/* --- টোস্ট নোটিফিকেশন --- */}
+      {/* --- Toast Notification --- */}
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, y: -40, x: '-50%' }}
-            animate={{ opacity: 1, y: 24, x: '-50%' }}
-            exit={{ opacity: 0, y: -40, x: '-50%' }}
-            className="fixed top-0 left-1/2 z-[10000] flex items-center gap-3 bg-white px-6 py-4 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] min-w-[340px]"
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 20, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.9 }}
+            className="fixed top-0 z-50 flex items-center gap-3 bg-white/90 backdrop-blur-md px-6 py-4 rounded-2xl shadow-2xl border border-white/50"
           >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              toast.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 
+            <div className={`p-2 rounded-full ${
+              toast.type === 'success' ? 'bg-green-100 text-green-600' : 
               toast.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
             }`}>
               {toast.type === 'success' && <CheckCircle className="w-5 h-5" />}
-              {toast.type === 'error' && <XCircle className="w-5 h-5" />}
-              {toast.type === 'warning' && <AlertTriangle className="w-5 h-5" />}
+              {toast.type === 'error' && <AlertTriangle className="w-5 h-5" />}
+              {toast.type === 'warning' && <Sparkles className="w-5 h-5" />}
             </div>
             <div>
-              <p className="font-bold text-slate-800 text-sm">{toast.type === 'success' ? 'Success' : toast.type === 'error' ? 'Error' : 'Warning'}</p>
-              <p className="text-xs font-medium text-slate-500 mt-0.5">{toast.text}</p>
+              <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide">{toast.type}</h4>
+              <p className="text-xs text-slate-500 font-medium">{toast.text}</p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ব্যাকগ্রাউন্ড ব্লার ইফেক্ট */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-200/40 rounded-full blur-[120px]" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-200/40 rounded-full blur-[120px]" />
+      {/* --- Animated Background Elements --- */}
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-300/30 rounded-full blur-[120px] animate-pulse-subtle" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-300/30 rounded-full blur-[120px] animate-pulse-subtle" style={{ animationDelay: '1s' }} />
 
-      {/* --- মেইন লগিন কার্ড --- */}
+      {/* --- Main Card --- */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.45, ease: "easeOut" }}
-        className="bg-white/80 backdrop-blur-2xl p-10 rounded-[40px] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] w-full max-w-md z-10 border border-white/60"
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
+        className="relative w-full max-w-[420px] z-10 mx-4"
       >
-        {/* হেডার */}
-        <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-slate-900/20 transform hover:scale-110 transition-transform duration-300">
-            <Layers className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight leading-none">
-            MEHEDI THAI <br />
-            <span className="text-slate-400 text-lg font-bold tracking-widest">ALUMINUM & GLASS</span>
-          </h1>
-          <p className="text-slate-400 text-xs font-bold mt-2 uppercase tracking-widest bg-slate-100 inline-block px-3 py-1 rounded-full">Enterprise ERP</p>
-        </div>
-
-        <form onSubmit={handleLogin} className="space-y-6">
-
-          {/* ইউজারনেম ইনপুট */}
-          <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2 tracking-wider">Username</label>
-            <div className={getInputClass('username')}>
-              <User className={`w-5 h-5 mr-3 transition-colors ${
-                errors.username ? 'text-red-400' : focusedField === 'username' ? 'text-slate-900' : 'text-slate-400'
-              }`} />
-              <input
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onFocus={() => setFocusedField('username')}
-                onBlur={() => setFocusedField(null)}
-                className="flex-1 bg-transparent outline-none font-bold text-slate-800 placeholder-slate-400 text-sm h-full"
-              />
-              {errors.username && <AlertTriangle className="w-5 h-5 text-red-400 animate-pulse ml-2" />}
-            </div>
+        <motion.div 
+          animate={shake ? { x: [-5, 5, -5, 5, 0] } : {}}
+          transition={{ duration: 0.4 }}
+          className="bg-white/80 backdrop-blur-2xl p-8 sm:p-10 rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] border border-white/60"
+        >
+          {/* Header */}
+          <div className="text-center mb-10">
+            <motion.div 
+              whileHover={{ rotate: 180, scale: 1.1 }}
+              transition={{ duration: 0.5 }}
+              className="w-20 h-20 bg-gradient-to-tr from-slate-900 to-slate-700 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-900/20"
+            >
+              <Layers className="w-10 h-10 text-white" />
+            </motion.div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+              MEHEDI <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">ERP</span>
+            </h1>
+            <p className="text-slate-400 font-medium text-sm mt-2">Enterprise Resource Planning</p>
           </div>
 
-          {/* পাসওয়ার্ড ইনপুট (Eye Icon সহ) */}
-          <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-2 tracking-wider">Password</label>
-            <div className={getInputClass('password')}>
-              <Lock className={`w-5 h-5 mr-3 transition-colors ${
-                errors.password ? 'text-red-400' : focusedField === 'password' ? 'text-slate-900' : 'text-slate-400'
-              }`} />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onFocus={() => setFocusedField('password')}
-                onBlur={() => setFocusedField(null)}
-                className="flex-1 bg-transparent outline-none font-bold text-slate-800 placeholder-slate-400 text-sm h-full"
-              />
-              {/* পাসওয়ার্ড টগল বাটন */}
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="ml-2 p-1 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-2">
+            
+            <InputField 
+              name="username"
+              type="text"
+              label="Username"
+              icon={User}
+              value={formData.username}
+              onChange={handleChange}
+            />
+
+            <InputField 
+              name="password"
+              type={showPassword ? "text" : "password"}
+              label="Password"
+              icon={Lock}
+              value={formData.password}
+              onChange={handleChange}
+              isPasswordToggle={true}
+            />
+
+            {/* Login Button with Magnetic Effect */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={isLoading}
+              className="w-full mt-6 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-lg shadow-slate-900/30 transition-all relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Processing...</span>
+                </div>
+              ) : (
+                <span className="flex items-center justify-center gap-2 relative z-10">
+                  Sign In to Dashboard <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </span>
+              )}
+            </motion.button>
+
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              Secure System by <span className="text-slate-800">Mehedi Hasan</span>
+            </p>
           </div>
 
-          {/* লগিন বাটন */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-xl shadow-slate-900/20 transition-all active:scale-[0.98] mt-4"
-          >
-            {isLoading ? (
-              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
-            ) : (
-              <span className="flex items-center justify-center gap-2">
-                Sign In <ArrowRight className="w-5 h-5" />
-              </span>
-            )}
-          </button>
-        </form>
-
-        <p className="text-[10px] text-center text-slate-400 font-bold mt-8 uppercase tracking-wider">
-          System Developed by <span className="text-slate-900">MEHEDI HASAN</span>
-        </p>
+        </motion.div>
       </motion.div>
     </div>
   );
