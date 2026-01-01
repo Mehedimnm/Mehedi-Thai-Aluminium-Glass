@@ -8,9 +8,10 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Layers,
   ShieldCheck,
-  Fingerprint
+  Fingerprint,
+  Hexagon,
+  Building2
 } from 'lucide-react';
 
 // Premium Input Component
@@ -37,7 +38,7 @@ const PremiumInput = ({
         {label}
       </label>
       
-      {/* Input Container - ✅ No underline */}
+      {/* Input Container */}
       <div className={`
         relative flex items-center rounded-2xl transition-all duration-300 overflow-hidden
         ${isError 
@@ -145,7 +146,7 @@ const Login = ({ onLogin }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f1f5f9] relative overflow-hidden font-sans p-4">
       
-      {/* Toast Notification - ✅ Fixed Progress Bar */}
+      {/* Toast Notification */}
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -180,7 +181,7 @@ const Login = ({ onLogin }) => {
                 <p className="text-xs text-slate-500 mt-0.5 truncate">{toast.text}</p>
               </div>
 
-              {/* ✅ Progress Bar - Now matches rounded corners */}
+              {/* Progress Bar */}
               {toast.type !== 'success' && (
                 <motion.div 
                   initial={{ scaleX: 1 }}
@@ -216,19 +217,28 @@ const Login = ({ onLogin }) => {
         >
           {/* Header */}
           <div className="text-center mb-10">
-            {/* Logo */}
+            
+            {/* ✅ New Premium Logo - Straight, No Green Dot */}
             <motion.div 
-              initial={{ scale: 0.8, rotate: -5 }}
-              animate={{ scale: 1, rotate: 0 }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="relative inline-block mb-6"
+              className="relative inline-flex items-center justify-center mb-6"
             >
-              <div className="w-20 h-20 md:w-24 md:h-24 bg-slate-900 rounded-[20px] md:rounded-[24px] flex items-center justify-center shadow-2xl shadow-slate-900/30 transform rotate-3 hover:rotate-0 transition-transform duration-500 cursor-pointer">
-                <Layers className="w-10 h-10 md:w-12 md:h-12 text-white" />
-              </div>
-              {/* Status Dot */}
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-lg flex items-center justify-center border-4 border-white shadow-lg">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              {/* Outer Glow Ring */}
+              <div className="absolute inset-0 w-24 h-24 md:w-28 md:h-28 bg-slate-900/5 rounded-3xl blur-xl" />
+              
+              {/* Main Logo Container */}
+              <div className="relative w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-2xl shadow-slate-900/40">
+                
+                {/* Inner Pattern */}
+                <div className="absolute inset-2 border border-white/10 rounded-xl md:rounded-2xl" />
+                
+                {/* Icon */}
+                <Building2 className="w-10 h-10 md:w-12 md:h-12 text-white relative z-10" strokeWidth={1.5} />
+                
+                {/* Shine Effect */}
+                <div className="absolute top-2 left-2 right-2 h-1/3 bg-gradient-to-b from-white/20 to-transparent rounded-t-xl md:rounded-t-2xl" />
               </div>
             </motion.div>
             
