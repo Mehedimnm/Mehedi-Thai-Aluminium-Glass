@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,7 +7,8 @@ import {
   FileSpreadsheet, LogOut, Menu, ChevronRight, Package, Wallet, Sparkles,
   Layers, Receipt, Files, TrendingUp, Clock, ArrowUpRight,
   Box, UserCheck, Briefcase, HandCoins, History, X, Camera,
-  User, Mail, Phone, Lock, Eye, EyeOff, Save, CheckCircle, XCircle, Settings
+  User, Mail, Phone, Lock, Eye, EyeOff, Save, CheckCircle, XCircle,
+  Shield, CreditCard, BadgeCheck
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -28,7 +29,6 @@ const Dashboard = ({ onLogout }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileTab, setProfileTab] = useState('profile');
   
-  // ✅ FIX: Separate state for form data to prevent reset
   const [adminData, setAdminData] = useState({
     name: 'Mehedi Hasan',
     email: '',
@@ -36,18 +36,21 @@ const Dashboard = ({ onLogout }) => {
     avatar: '',
     role: 'Admin'
   });
-  const [formData, setFormData] = useState({
+
+  // ✅ FIX: Completely separate form states - not linked to adminData directly
+  const [profileForm, setProfileForm] = useState({
     name: '',
     email: '',
     phone: '',
     avatar: ''
   });
   
-  const [passwordData, setPasswordData] = useState({
+  const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
+
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -71,10 +74,10 @@ const Dashboard = ({ onLogout }) => {
   const isActive = (path) => location.pathname === path;
   const isDashboardPage = location.pathname === '/dashboard' || location.pathname === '/';
 
-  const showToast = (type, text) => {
+  const showToast = useCallback((type, text) => {
     setToast({ type, text });
     setTimeout(() => setToast(null), 3000);
-  };
+  }, []);
 
   // Animated Counter
   useEffect(() => {
@@ -123,25 +126,39 @@ const Dashboard = ({ onLogout }) => {
     fetchAdminProfile();
   }, []);
 
-  // ✅ FIX: Initialize form data when modal opens
-  useEffect(() => {
-    if (showProfileModal) {
-      setFormData({
-        name: adminData.name || '',
-        email: adminData.email || '',
-        phone: adminData.phone || '',
-        avatar: adminData.avatar || ''
-      });
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
-      setProfileTab('profile');
-    }
-  }, [showProfileModal, adminData]);
+  // ✅ FIX: Open Modal Handler - Initialize form only once when opening
+  const handleOpenProfileModal = useCallback(() => {
+    setProfileForm({
+      name: adminData.name || '',
+      email: adminData.email || '',
+      phone: adminData.phone || '',
+      avatar: adminData.avatar || ''
+    });
+    setPasswordForm({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setShowPasswords({ current: false, new: false, confirm: false });
+    setProfileTab('profile');
+    setShowProfileModal(true);
+  }, [adminData]);
 
-  // Data Fetching
+  // Close Modal Handler
+  const handleCloseProfileModal = useCallback(() => {
+    setShowProfileModal(false);
+  }, []);
+
+  // ✅ FIX: Separate input handlers that don't cause re-renders
+  const handleProfileInputChange = useCallback((field, value) => {
+    setProfileForm(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handlePasswordInputChange = useCallback((field, value) => {
+    setPasswordForm(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  // Data Fetching with Due Collection History
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -190,29 +207,47 @@ const Dashboard = ({ onLogout }) => {
           { name: 'Due', value: totalDueVal, color: '#64748b' }
         ];
 
+        // ✅ FIX: Activities including Due Collection from payment history
         const activities = [];
+        
         invoices.forEach(inv => {
+          // Invoice Created
           activities.push({
-            type: 'Invoice', id: inv._id, date: new Date(inv.createdAt || inv.date),
-            title: `Invoice Created`, subtitle: `${inv.invoiceNo} • ${inv.customer?.name}`,
+            type: 'Invoice',
+            id: inv._id,
+            date: new Date(inv.createdAt || inv.date),
+            title: `Invoice Created`,
+            subtitle: `${inv.invoiceNo} • ${inv.customer?.name}`,
             amount: inv.payment?.grandTotal
           });
-          if (inv.payment?.paid > 0) {
-            activities.push({
-              type: 'Payment', id: inv._id + '_pay', date: new Date(inv.createdAt || inv.date),
-              title: `Payment Received`, subtitle: `${inv.invoiceNo} • ${inv.customer?.name}`,
-              amount: inv.payment?.paid
+
+          // ✅ Payment History - Including Due Collections
+          if (inv.payment?.history && inv.payment.history.length > 0) {
+            inv.payment.history.forEach((payment, index) => {
+              activities.push({
+                type: 'Payment',
+                id: `${inv._id}_payment_${index}`,
+                date: new Date(payment.date),
+                title: payment.remark === 'Initial Payment' ? 'Initial Payment' : 'Due Collected',
+                subtitle: `${inv.invoiceNo} • ${inv.customer?.name}`,
+                amount: payment.amount
+              });
             });
           }
         });
+
         quotations.forEach(quo => {
           activities.push({
-            type: 'Quotation', id: quo._id, date: new Date(quo.createdAt || quo.date),
-            title: `Quotation Created`, subtitle: `${quo.quotationNo} • ${quo.customer?.name}`,
+            type: 'Quotation',
+            id: quo._id,
+            date: new Date(quo.createdAt || quo.date),
+            title: `Quotation Created`,
+            subtitle: `${quo.quotationNo} • ${quo.customer?.name}`,
             amount: quo.payment?.grandTotal
           });
         });
 
+        // Sort by date descending
         activities.sort((a, b) => b.date - a.date);
 
         setDashboardData({
@@ -223,7 +258,7 @@ const Dashboard = ({ onLogout }) => {
           totalCustomers: custRes.data.length,
           totalInvoices: invoices.length,
           totalQuotations: quotations.length,
-          recentActivities: activities.slice(0, 8),
+          recentActivities: activities.slice(0, 10),
           monthlyData,
           topProducts,
           paymentStatus
@@ -236,25 +271,25 @@ const Dashboard = ({ onLogout }) => {
   }, [isDashboardPage]);
 
   // Handle Avatar Upload
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = useCallback((e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, avatar: reader.result }));
+        setProfileForm(prev => ({ ...prev, avatar: reader.result }));
       };
       reader.readAsDataURL(file);
     }
-  };
+  }, []);
 
   // Save Profile
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
-      const res = await axios.put('/admin-profile', formData);
+      const res = await axios.put('/admin-profile', profileForm);
       setAdminData(res.data);
       showToast('success', 'Profile updated successfully!');
-      setShowProfileModal(false);
+      handleCloseProfileModal();
     } catch (error) {
       showToast('error', 'Failed to update profile!');
     }
@@ -263,11 +298,11 @@ const Dashboard = ({ onLogout }) => {
 
   // Change Password
   const handleChangePassword = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       showToast('error', 'Passwords do not match!');
       return;
     }
-    if (passwordData.newPassword.length < 4) {
+    if (passwordForm.newPassword.length < 4) {
       showToast('error', 'Password must be at least 4 characters!');
       return;
     }
@@ -275,18 +310,18 @@ const Dashboard = ({ onLogout }) => {
     setSaving(true);
     try {
       await axios.put('/change-password', {
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
       });
       showToast('success', 'Password changed successfully!');
-      setShowProfileModal(false);
+      handleCloseProfileModal();
     } catch (error) {
       showToast('error', error.response?.data?.error || 'Failed to change password!');
     }
     setSaving(false);
   };
 
-  // Menu Items with modern icons
+  // Menu Items
   const menuItems = [
     { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { id: 'Manage Products', label: 'Inventory', icon: Package, path: '/products' },
@@ -317,11 +352,11 @@ const Dashboard = ({ onLogout }) => {
     return null;
   };
 
-  // ✅ Modern Sidebar Component
+  // Sidebar Component
   const SidebarContent = ({ isMobile = false }) => (
     <div className="flex flex-col h-full bg-white">
       {/* Logo */}
-      <div className="h-[72px] flex items-center justify-between px-5 border-b border-gray-100/80">
+      <div className="h-[72px] flex items-center justify-between px-5 border-b border-slate-100">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="w-10 h-10 min-w-[40px] bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl flex items-center justify-center shadow-lg shadow-slate-900/20">
             <Layers className="text-white w-5 h-5" />
@@ -336,8 +371,8 @@ const Dashboard = ({ onLogout }) => {
           )}
         </div>
         {isMobile && (
-          <button onClick={() => setMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-            <X className="w-5 h-5 text-gray-400" />
+          <button onClick={() => setMobileMenuOpen(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+            <X className="w-5 h-5 text-slate-400" />
           </button>
         )}
       </div>
@@ -377,13 +412,13 @@ const Dashboard = ({ onLogout }) => {
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="p-4 border-t border-gray-100/80">
+      {/* ✅ Logout - Red Color */}
+      <div className="p-4 border-t border-slate-100">
         <motion.button
           onClick={onLogout}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-600 rounded-xl font-semibold text-sm transition-all duration-200"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-semibold text-sm transition-all duration-200 border border-red-100 hover:border-red-200"
         >
           <LogOut className="w-5 h-5" />
           {(isSidebarOpen || isMobile) && <span>Logout</span>}
@@ -392,269 +427,298 @@ const Dashboard = ({ onLogout }) => {
     </div>
   );
 
-  // ✅ Fixed Profile Modal Component
-  const ProfileModal = () => (
-    <AnimatePresence>
-      {showProfileModal && (
+  // ✅ Premium Profile Modal Component - Completely Fixed
+  const ProfileModal = () => {
+    if (!showProfileModal) return null;
+
+    return (
+      <div
+        className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[10000] flex items-center justify-center p-4"
+        onClick={handleCloseProfileModal}
+      >
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4"
-          onClick={() => setShowProfileModal(false)}
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          transition={{ type: "spring", duration: 0.4 }}
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden"
         >
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            transition={{ type: "spring", duration: 0.5 }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
-          >
-            {/* Header */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-8 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-20 translate-x-20" />
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-16 -translate-x-16" />
-              
-              <button
-                onClick={() => setShowProfileModal(false)}
-                className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-xl transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              
-              <div className="flex flex-col items-center relative z-10">
-                <div className="relative group">
-                  <div className="w-24 h-24 rounded-2xl bg-slate-700/50 border-4 border-white/20 overflow-hidden shadow-xl">
-                    {formData.avatar ? (
-                      <img src={formData.avatar} alt="Admin" className="w-full h-full object-cover" />
-                    ) : adminData.avatar ? (
-                      <img src={adminData.avatar} alt="Admin" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-slate-600">
-                        <User className="w-10 h-10 text-slate-400" />
-                      </div>
-                    )}
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-2 -right-2 w-10 h-10 bg-white text-slate-800 rounded-xl flex items-center justify-center shadow-lg hover:bg-slate-50 transition-colors"
-                  >
-                    <Camera className="w-5 h-5" />
-                  </motion.button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="hidden"
-                  />
+          {/* Premium Header */}
+          <div className="relative bg-slate-900 px-8 pt-8 pb-16">
+            {/* Pattern Background */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 left-0 w-full h-full" 
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                }}
+              />
+            </div>
+            
+            <button
+              onClick={handleCloseProfileModal}
+              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-xl transition-colors text-white/70 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            {/* Header Content */}
+            <div className="relative z-10 flex items-center gap-5">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-2xl bg-slate-800 border-4 border-slate-700 overflow-hidden shadow-2xl">
+                  {profileForm.avatar ? (
+                    <img src={profileForm.avatar} alt="Admin" className="w-full h-full object-cover" />
+                  ) : adminData.avatar ? (
+                    <img src={adminData.avatar} alt="Admin" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white text-2xl font-bold">
+                      {adminData.name?.charAt(0) || 'A'}
+                    </div>
+                  )}
                 </div>
-                <h3 className="mt-4 text-xl font-bold">{adminData.name}</h3>
-                <span className="px-3 py-1 bg-white/10 rounded-full text-xs font-semibold mt-2">{adminData.role}</span>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-2 -right-2 w-8 h-8 bg-white text-slate-700 rounded-lg flex items-center justify-center shadow-lg hover:bg-slate-50 transition-colors"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+              </div>
+              
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-white">{adminData.name}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <BadgeCheck className="w-4 h-4 text-emerald-400" />
+                  <span className="text-slate-400 text-sm font-medium">{adminData.role}</span>
+                </div>
               </div>
             </div>
+          </div>
 
-            {/* Tabs */}
-            <div className="flex bg-slate-50">
+          {/* Tab Navigation - Moved up with negative margin */}
+          <div className="relative -mt-6 mx-6">
+            <div className="bg-slate-100 p-1.5 rounded-2xl flex gap-1">
               <button
+                type="button"
                 onClick={() => setProfileTab('profile')}
-                className={`flex-1 py-4 text-sm font-semibold transition-all relative ${
+                className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                   profileTab === 'profile'
-                    ? 'text-slate-900 bg-white'
-                    : 'text-slate-400 hover:text-slate-600'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
-                Profile Info
-                {profileTab === 'profile' && (
-                  <motion.div layoutId="activeProfileTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900" />
-                )}
+                <User className="w-4 h-4" />
+                Profile
               </button>
               <button
+                type="button"
                 onClick={() => setProfileTab('password')}
-                className={`flex-1 py-4 text-sm font-semibold transition-all relative ${
+                className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                   profileTab === 'password'
-                    ? 'text-slate-900 bg-white'
-                    : 'text-slate-400 hover:text-slate-600'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
+                <Shield className="w-4 h-4" />
                 Security
-                {profileTab === 'password' && (
-                  <motion.div layoutId="activeProfileTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900" />
-                )}
               </button>
             </div>
+          </div>
 
-            {/* Content */}
-            <div className="p-6">
-              <AnimatePresence mode="wait">
-                {profileTab === 'profile' ? (
-                  <motion.div
-                    key="profile"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    className="space-y-4"
-                  >
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                        <input
-                          type="text"
-                          value={formData.name}
-                          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                          className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl font-medium text-slate-800 focus:border-slate-300 focus:bg-white outline-none transition-all"
-                          placeholder="Enter your name"
-                        />
-                      </div>
+          {/* Content */}
+          <div className="p-6 pt-5">
+            {profileTab === 'profile' ? (
+              <div className="space-y-4">
+                {/* Name Input */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">
+                    Full Name
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center group-focus-within:bg-slate-200 transition-colors">
+                      <User className="w-5 h-5 text-slate-400" />
                     </div>
+                    <input
+                      type="text"
+                      value={profileForm.name}
+                      onChange={(e) => handleProfileInputChange('name', e.target.value)}
+                      className="w-full pl-[72px] pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-medium text-slate-800 focus:border-slate-300 focus:bg-white outline-none transition-all"
+                      placeholder="Enter your name"
+                    />
+                  </div>
+                </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Email</label>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                        <input
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                          className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl font-medium text-slate-800 focus:border-slate-300 focus:bg-white outline-none transition-all"
-                          placeholder="Enter your email"
-                        />
-                      </div>
+                {/* Email Input */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">
+                    Email Address
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center group-focus-within:bg-slate-200 transition-colors">
+                      <Mail className="w-5 h-5 text-slate-400" />
                     </div>
+                    <input
+                      type="email"
+                      value={profileForm.email}
+                      onChange={(e) => handleProfileInputChange('email', e.target.value)}
+                      className="w-full pl-[72px] pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-medium text-slate-800 focus:border-slate-300 focus:bg-white outline-none transition-all"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Phone</label>
-                      <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                        <input
-                          type="text"
-                          value={formData.phone}
-                          onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                          className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl font-medium text-slate-800 focus:border-slate-300 focus:bg-white outline-none transition-all"
-                          placeholder="Enter your phone"
-                        />
-                      </div>
+                {/* Phone Input */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">
+                    Phone Number
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center group-focus-within:bg-slate-200 transition-colors">
+                      <Phone className="w-5 h-5 text-slate-400" />
                     </div>
+                    <input
+                      type="text"
+                      value={profileForm.phone}
+                      onChange={(e) => handleProfileInputChange('phone', e.target.value)}
+                      className="w-full pl-[72px] pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-medium text-slate-800 focus:border-slate-300 focus:bg-white outline-none transition-all"
+                      placeholder="Enter your phone"
+                    />
+                  </div>
+                </div>
 
-                    <motion.button
-                      onClick={handleSaveProfile}
-                      disabled={saving}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-slate-900/25"
+                {/* Save Button */}
+                <motion.button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg shadow-slate-900/20 mt-6"
+                >
+                  {saving ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      Save Changes
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Current Password */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">
+                    Current Password
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center group-focus-within:bg-slate-200 transition-colors">
+                      <Lock className="w-5 h-5 text-slate-400" />
+                    </div>
+                    <input
+                      type={showPasswords.current ? 'text' : 'password'}
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => handlePasswordInputChange('currentPassword', e.target.value)}
+                      className="w-full pl-[72px] pr-14 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-medium text-slate-800 focus:border-slate-300 focus:bg-white outline-none transition-all"
+                      placeholder="Enter current password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-600 transition-colors"
                     >
-                      {saving ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <>
-                          <Save className="w-5 h-5" />
-                          Save Changes
-                        </>
-                      )}
-                    </motion.button>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="password"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="space-y-4"
-                  >
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Current Password</label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                        <input
-                          type={showPasswords.current ? 'text' : 'password'}
-                          value={passwordData.currentPassword}
-                          onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                          className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl font-medium text-slate-800 focus:border-slate-300 focus:bg-white outline-none transition-all"
-                          placeholder="Enter current password"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                        >
-                          {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
-                    </div>
+                      {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">New Password</label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                        <input
-                          type={showPasswords.new ? 'text' : 'password'}
-                          value={passwordData.newPassword}
-                          onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                          className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl font-medium text-slate-800 focus:border-slate-300 focus:bg-white outline-none transition-all"
-                          placeholder="Enter new password"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                        >
-                          {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
+                {/* New Password */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">
+                    New Password
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center group-focus-within:bg-slate-200 transition-colors">
+                      <Lock className="w-5 h-5 text-slate-400" />
                     </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Confirm Password</label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                        <input
-                          type={showPasswords.confirm ? 'text' : 'password'}
-                          value={passwordData.confirmPassword}
-                          onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                          className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl font-medium text-slate-800 focus:border-slate-300 focus:bg-white outline-none transition-all"
-                          placeholder="Confirm new password"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                        >
-                          {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <motion.button
-                      onClick={handleChangePassword}
-                      disabled={saving}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-slate-900/25"
+                    <input
+                      type={showPasswords.new ? 'text' : 'password'}
+                      value={passwordForm.newPassword}
+                      onChange={(e) => handlePasswordInputChange('newPassword', e.target.value)}
+                      className="w-full pl-[72px] pr-14 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-medium text-slate-800 focus:border-slate-300 focus:bg-white outline-none transition-all"
+                      placeholder="Enter new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-600 transition-colors"
                     >
-                      {saving ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <>
-                          <Lock className="w-5 h-5" />
-                          Update Password
-                        </>
-                      )}
-                    </motion.button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
+                      {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">
+                    Confirm New Password
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center group-focus-within:bg-slate-200 transition-colors">
+                      <Lock className="w-5 h-5 text-slate-400" />
+                    </div>
+                    <input
+                      type={showPasswords.confirm ? 'text' : 'password'}
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => handlePasswordInputChange('confirmPassword', e.target.value)}
+                      className="w-full pl-[72px] pr-14 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-medium text-slate-800 focus:border-slate-300 focus:bg-white outline-none transition-all"
+                      placeholder="Confirm new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Change Password Button */}
+                <motion.button
+                  type="button"
+                  onClick={handleChangePassword}
+                  disabled={saving}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg shadow-slate-900/20 mt-6"
+                >
+                  {saving ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Shield className="w-5 h-5" />
+                      Update Password
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            )}
+          </div>
         </motion.div>
-      )}
-    </AnimatePresence>
-  );
+      </div>
+    );
+  };
 
-  // ✅ Dashboard Content with enhanced cards
+  // Dashboard Content
   const dashboardContent = (
     <div className="space-y-6 pb-10">
       {/* Header */}
@@ -669,7 +733,7 @@ const Dashboard = ({ onLogout }) => {
         </div>
       </div>
 
-      {/* ✅ Main Stats with enhanced hover effects */}
+      {/* Main Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Total Sales */}
         <motion.div
@@ -897,7 +961,7 @@ const Dashboard = ({ onLogout }) => {
           </div>
         </motion.div>
 
-        {/* Recent Activity */}
+        {/* Recent Activity - ✅ Now includes Due Collection */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -920,7 +984,7 @@ const Dashboard = ({ onLogout }) => {
               <div className="divide-y divide-slate-50">
                 {dashboardData.recentActivities.map((act, i) => (
                   <motion.div
-                    key={i}
+                    key={act.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.05 * i }}
@@ -1050,7 +1114,7 @@ const Dashboard = ({ onLogout }) => {
               <p className="text-xs text-slate-400">{adminData.role}</p>
             </div>
             <motion.button
-              onClick={() => setShowProfileModal(true)}
+              onClick={handleOpenProfileModal}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="w-11 h-11 rounded-xl bg-slate-100 border-2 border-white shadow-lg overflow-hidden hover:ring-2 hover:ring-slate-200 transition-all"
