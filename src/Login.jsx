@@ -39,11 +39,10 @@ const Login = ({ onLogin }) => {
     }
 
     setIsLoading(true);
-
     try {
-      const result = await axios.post('/login', { username, password });
-      if (result.data === 'Success') {
-        setToast({ type: 'success', text: 'Login Successful! Please wait...' });
+      const res = await axios.post('/login', { username, password });
+      if (res.data === 'Success') {
+        setToast({ type: 'success', text: 'Login Successful! Please wait…' });
         setTimeout(() => onLogin(), 1500);
       } else {
         setToast({ type: 'error', text: 'Incorrect Username or Password!' });
@@ -53,20 +52,20 @@ const Login = ({ onLogin }) => {
       setToast({ type: 'error', text: 'Network Error! Try again.' });
       setTimeout(() => setToast(null), 3000);
     }
-
     setIsLoading(false);
   };
 
+  // 🔥 BORDERLESS ENTERPRISE INPUT STYLE
   const inputBaseClass = (error, focused) => `
     relative flex items-center rounded-2xl px-5 py-4 transition-all duration-300
-    bg-slate-50/80 border
-    ${error
-      ? 'border-red-300 ring-1 ring-red-200'
-      : focused
-        ? 'border-slate-300 ring-1 ring-slate-300'
-        : 'border-slate-200 hover:border-slate-300'
+    bg-slate-50/90
+    ${
+      error
+        ? 'shadow-[inset_0_0_0_2px_rgba(248,113,113,0.35)]'
+        : focused
+          ? 'shadow-[inset_0_0_0_2px_rgba(15,23,42,0.25)]'
+          : 'shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]'
     }
-    shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]
   `;
 
   return (
@@ -76,10 +75,10 @@ const Login = ({ onLogin }) => {
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, y: -50, x: '-50%' }}
-            animate={{ opacity: 1, y: 30, x: '-50%' }}
-            exit={{ opacity: 0, y: -50, x: '-50%' }}
-            className="fixed top-0 left-1/2 z-[10000] flex items-center gap-3 bg-white px-6 py-4 rounded-2xl shadow-xl border min-w-[320px]"
+            initial={{ opacity: 0, y: -40, x: '-50%' }}
+            animate={{ opacity: 1, y: 24, x: '-50%' }}
+            exit={{ opacity: 0, y: -40, x: '-50%' }}
+            className="fixed top-0 left-1/2 z-[10000] flex items-center gap-3 bg-white px-6 py-4 rounded-2xl shadow-xl min-w-[320px]"
           >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
               toast.type === 'success'
@@ -102,16 +101,16 @@ const Login = ({ onLogin }) => {
         )}
       </AnimatePresence>
 
-      {/* Background Blobs */}
+      {/* Background blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-200/40 rounded-full blur-[120px]" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-200/40 rounded-full blur-[120px]" />
 
       {/* Card */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="bg-white/70 backdrop-blur-xl border p-10 rounded-[40px] shadow-2xl w-full max-w-md z-10"
+        transition={{ duration: 0.45 }}
+        className="bg-white/70 backdrop-blur-xl p-10 rounded-[40px] shadow-2xl w-full max-w-md z-10"
       >
         {/* Header */}
         <div className="text-center mb-10">
