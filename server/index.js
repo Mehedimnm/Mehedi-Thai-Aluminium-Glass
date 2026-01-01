@@ -1,13 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path'); // ✅ Added for serving frontend
 require('dotenv').config(); 
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// --- ১. ডাটাবেস কানেকশন ---
+// --- 1. Database Connection ---
 const mongoUri = process.env.MONGO_URI;
 
 mongoose.connect(mongoUri)
@@ -15,13 +16,13 @@ mongoose.connect(mongoUri)
     .catch(err => console.log("❌ DB Connection Error:", err));
 
 
-// --- ২. ডাটাবেস মডেল (Schemas) ---
+// --- 2. Database Models (Schemas) ---
 
-// ইউজার মডেল
+// User Model
 const UserSchema = new mongoose.Schema({ username: String, pass: String });
 const UserModel = mongoose.model("users", UserSchema);
 
-// প্রোডাক্ট মডেল
+// Product Model
 const ProductSchema = new mongoose.Schema({
     name: String,
     category: String,
@@ -33,7 +34,7 @@ const ProductSchema = new mongoose.Schema({
 });
 const ProductModel = mongoose.model("products", ProductSchema);
 
-// কাস্টমার মডেল
+// Customer Model
 const CustomerSchema = new mongoose.Schema({
     name: { type: String, required: true },
     mobile: String,
@@ -42,7 +43,7 @@ const CustomerSchema = new mongoose.Schema({
 }, { collection: 'customers' });
 const CustomerModel = mongoose.model("Customer", CustomerSchema);
 
-// ✅ ইনভয়েস মডেল
+// Invoice Model
 const InvoiceSchema = new mongoose.Schema({
     invoiceNo: { type: String, required: true },
     date: { type: Date, default: Date.now },
@@ -84,7 +85,7 @@ const InvoiceSchema = new mongoose.Schema({
 
 const InvoiceModel = mongoose.model("Invoice", InvoiceSchema);
 
-// ✅ কোটেশন মডেল
+// Quotation Model
 const QuotationSchema = new mongoose.Schema({
     quotationNo: { type: String, required: true },
     date: { type: Date, default: Date.now },
@@ -118,7 +119,7 @@ const QuotationSchema = new mongoose.Schema({
 const QuotationModel = mongoose.model("Quotation", QuotationSchema);
 
 
-// --- ৩. API ROUTES ---
+// --- 3. API ROUTES ---
 
 // Login API
 app.post('/login', async (req, res) => {
@@ -206,7 +207,7 @@ app.delete('/delete-customer/:id', async (req, res) => {
 });
 
 
-// --- ৪. INVOICE API ---
+// --- 4. INVOICE API ---
 
 app.post('/create-invoice', async (req, res) => {
     const session = await mongoose.startSession();
@@ -250,7 +251,6 @@ app.post('/create-invoice', async (req, res) => {
         await session.commitTransaction();
         session.endSession();
         
-        // ✅ ফিক্স: এখানে পুরো object পাঠানো হচ্ছে যাতে ফ্রন্টএন্ড _id পায়
         res.json({ status: "Success", data: newInvoice });
 
     } catch (err) {
@@ -320,7 +320,7 @@ app.delete('/delete-invoice/:id', async (req, res) => {
 });
 
 
-// --- ৫. QUOTATION API ---
+// --- 5. QUOTATION API ---
 
 app.post('/create-quotation', async (req, res) => {
     try {
@@ -382,7 +382,16 @@ app.delete('/delete-quotation/:id', async (req, res) => {
 });
 
 
-// --- ৬. সার্ভার স্টার্ট ---
+// --- 6. Server Frontend (For Render) ---
+// ✅ This block serves the React frontend when deployed
+app.use(express.static(path.join(__dirname, '../dist')));
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+
+// --- 7. Server Start ---
 const port = process.env.PORT || 3001; 
 app.listen(port, () => {
     console.log(`🚀 Server is running on port ${port}`);
