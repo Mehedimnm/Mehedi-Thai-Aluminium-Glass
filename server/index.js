@@ -5,7 +5,7 @@ const path = require('path');
 require('dotenv').config(); 
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // বড় ইমেজ আপলোডের জন্য limit বাড়ানো হয়েছে
 app.use(cors());
 
 // --- 1. Database Connection ---
@@ -21,6 +21,16 @@ mongoose.connect(mongoUri)
 // User Model
 const UserSchema = new mongoose.Schema({ username: String, pass: String });
 const UserModel = mongoose.model("users", UserSchema);
+
+// ✅ Admin Profile Model (নতুন যুক্ত করা হয়েছে)
+const AdminSchema = new mongoose.Schema({
+    name: { type: String, default: 'Mehedi Hasan' },
+    email: { type: String, default: '' },
+    phone: { type: String, default: '' },
+    avatar: { type: String, default: '' }, // Base64 ইমেজ স্টোর হবে
+    role: { type: String, default: 'Admin' }
+}, { timestamps: true });
+const AdminModel = mongoose.model("Admin", AdminSchema);
 
 // Product Model
 const ProductSchema = new mongoose.Schema({
@@ -131,6 +141,97 @@ app.post('/login', async (req, res) => {
         res.json("Wrong password");
     }
 });
+
+
+// =============================================
+// ✅ ADMIN PROFILE APIs (নতুন যুক্ত করা হয়েছে)
+// =============================================
+
+// Get Admin Profile
+app.get('/admin-profile', async (req, res) => {
+    try {
+        let admin = await AdminModel.findOne();
+        
+        // যদি কোনো Admin ডাটা না থাকে, তাহলে ডিফল্ট তৈরি করবে
+        if (!admin) {
+            admin = await AdminModel.create({
+                name: 'Mehedi Hasan',
+                email: '',
+                phone: '',
+                avatar: '',
+                role: 'Admin'
+            });
+        }
+        
+        res.json(admin);
+    } catch (error) {
+        console.error("Admin Profile Get Error:", error);
+        res.status(500).json({ error: 'Failed to get admin profile' });
+    }
+});
+
+// Update Admin Profile
+app.put('/admin-profile', async (req, res) => {
+    try {
+        const { name, email, phone, avatar } = req.body;
+        
+        let admin = await AdminModel.findOne();
+        
+        if (!admin) {
+            // Admin না থাকলে নতুন তৈরি হবে
+            admin = await AdminModel.create({
+                name: name || 'Mehedi Hasan',
+                email: email || '',
+                phone: phone || '',
+                avatar: avatar || '',
+                role: 'Admin'
+            });
+        } else {
+            // আপডেট করবে
+            admin.name = name || admin.name;
+            admin.email = email || admin.email;
+            admin.phone = phone || admin.phone;
+            if (avatar !== undefined) {
+                admin.avatar = avatar;
+            }
+            await admin.save();
+        }
+        
+        res.json(admin);
+    } catch (error) {
+        console.error("Admin Profile Update Error:", error);
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+});
+
+// Change Password
+app.put('/change-password', async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        
+        // User খুঁজে বের করা (ডিফল্ট admin ইউজার)
+        const user = await UserModel.findOne({ username: 'admin' });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Current Password চেক করা
+        if (user.pass !== currentPassword) {
+            return res.status(400).json({ error: 'Current password is incorrect' });
+        }
+        
+        // নতুন পাসওয়ার্ড সেট করা
+        user.pass = newPassword;
+        await user.save();
+        
+        res.json({ message: 'Password changed successfully' });
+    } catch (error) {
+        console.error("Change Password Error:", error);
+        res.status(500).json({ error: 'Failed to change password' });
+    }
+});
+
 
 // --- Product APIs ---
 
@@ -383,7 +484,6 @@ app.delete('/delete-quotation/:id', async (req, res) => {
 
 
 // --- 6. Server Frontend (For Render) ---
-// ✅ Corrected: Using regex /(.*)/ instead of '*'
 app.use(express.static(path.join(__dirname, '../dist')));
 
 app.get(/(.*)/, (req, res) => {

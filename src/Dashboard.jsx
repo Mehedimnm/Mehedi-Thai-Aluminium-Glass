@@ -1,27 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, UserPlus, PackagePlus, FileText,
   FileSpreadsheet, LogOut, Menu, ChevronRight, Package, Wallet, Sparkles,
-  Layers, Receipt, Files, TrendingUp, Clock, ArrowUpRight, ArrowDownRight,
-  Box, UserCheck, Briefcase, HandCoins, History, X, Bell, Search,
-  BarChart3, PieChart, Activity, Calendar, AlertTriangle, CheckCircle2,
-  DollarSign, ShoppingCart, CreditCard, Target
+  Layers, Receipt, Files, TrendingUp, Clock, ArrowUpRight,
+  Box, UserCheck, Briefcase, HandCoins, History, X, Camera,
+  User, Mail, Phone, Lock, Eye, EyeOff, Save, CheckCircle, XCircle
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart as RechartsPie, Pie, Cell, BarChart, Bar, Legend, LineChart, Line
+  PieChart as RechartsPie, Pie, Cell, BarChart, Bar
 } from 'recharts';
 
 const Dashboard = ({ onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [welcomeToast, setWelcomeToast] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  // Admin Profile States
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileTab, setProfileTab] = useState('profile'); // 'profile' | 'password'
+  const [adminData, setAdminData] = useState({
+    name: 'Mehedi Hasan',
+    email: '',
+    phone: '',
+    avatar: '',
+    role: 'Admin'
+  });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+  const [saving, setSaving] = useState(false);
+
+  // Animated Counter Values
   const [animatedValues, setAnimatedValues] = useState({
     totalInvest: 0, totalSales: 0, totalDue: 0
   });
@@ -38,13 +63,19 @@ const Dashboard = ({ onLogout }) => {
   const isActive = (path) => location.pathname === path;
   const isDashboardPage = location.pathname === '/dashboard' || location.pathname === '/';
 
+  // Show Toast
+  const showToast = (type, text) => {
+    setToast({ type, text });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   // Animated Counter Effect
   useEffect(() => {
     const duration = 1500;
     const steps = 60;
     const stepDuration = duration / steps;
-
     let currentStep = 0;
+
     const timer = setInterval(() => {
       currentStep++;
       const progress = currentStep / steps;
@@ -62,13 +93,27 @@ const Dashboard = ({ onLogout }) => {
     return () => clearInterval(timer);
   }, [dashboardData.totalInvest, dashboardData.totalSales, dashboardData.totalDue]);
 
+  // Welcome Toast
   useEffect(() => {
     const hasShownWelcome = sessionStorage.getItem('hasShownWelcome');
     if (!hasShownWelcome) {
-      setWelcomeToast("Welcome back! System Ready.");
+      setWelcomeToast("System Ready!");
       sessionStorage.setItem('hasShownWelcome', 'true');
       setTimeout(() => setWelcomeToast(null), 4000);
     }
+  }, []);
+
+  // Fetch Admin Profile
+  useEffect(() => {
+    const fetchAdminProfile = async () => {
+      try {
+        const res = await axios.get('/admin-profile');
+        setAdminData(res.data);
+      } catch (error) {
+        console.error('Failed to fetch admin profile:', error);
+      }
+    };
+    fetchAdminProfile();
   }, []);
 
   // Data Fetching
@@ -86,13 +131,12 @@ const Dashboard = ({ onLogout }) => {
         const invoices = invRes.data;
         const quotations = quotRes.data;
 
-        // Calculations
         const totalInvestVal = products.reduce((acc, item) => acc + (Number(item.price) * Number(item.stock)), 0);
         const totalSalesVal = invoices.reduce((acc, inv) => acc + (inv.payment?.grandTotal || 0), 0);
         const totalDueVal = invoices.reduce((acc, inv) => acc + (inv.payment?.due || 0), 0);
         const totalPaidVal = totalSalesVal - totalDueVal;
 
-        // Monthly Data for Charts (Last 6 months)
+        // Monthly Data
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const currentMonth = new Date().getMonth();
         const monthlyData = [];
@@ -108,21 +152,20 @@ const Dashboard = ({ onLogout }) => {
           monthlyData.push({
             name: monthNames[monthIndex],
             sales: monthSales,
-            paid: monthPaid,
-            due: monthSales - monthPaid
+            paid: monthPaid
           });
         }
 
-        // Top Products by Stock Value
+        // Top Products
         const topProducts = [...products]
-          .map(p => ({ name: p.name?.substring(0, 15) || 'Unknown', value: Number(p.price) * Number(p.stock) }))
+          .map(p => ({ name: p.name?.substring(0, 12) || 'Unknown', value: Number(p.price) * Number(p.stock) }))
           .sort((a, b) => b.value - a.value)
           .slice(0, 5);
 
-        // Payment Status for Pie Chart
+        // Payment Status
         const paymentStatus = [
           { name: 'পরিশোধিত', value: totalPaidVal, color: '#10b981' },
-          { name: 'বাকি', value: totalDueVal, color: '#f59e0b' }
+          { name: 'বাকি', value: totalDueVal, color: '#64748b' }
         ];
 
         // Activities
@@ -131,13 +174,13 @@ const Dashboard = ({ onLogout }) => {
           activities.push({
             type: 'Invoice', id: inv._id, date: new Date(inv.createdAt || inv.date),
             title: `Invoice Created`, subtitle: `${inv.invoiceNo} • ${inv.customer?.name}`,
-            amount: inv.payment?.grandTotal, status: 'invoice'
+            amount: inv.payment?.grandTotal
           });
           if (inv.payment?.paid > 0) {
             activities.push({
               type: 'Payment', id: inv._id + '_pay', date: new Date(inv.createdAt || inv.date),
               title: `Payment Received`, subtitle: `${inv.invoiceNo} • ${inv.customer?.name}`,
-              amount: inv.payment?.paid, status: 'paid'
+              amount: inv.payment?.paid
             });
           }
         });
@@ -145,12 +188,11 @@ const Dashboard = ({ onLogout }) => {
           activities.push({
             type: 'Quotation', id: quo._id, date: new Date(quo.createdAt || quo.date),
             title: `Quotation Created`, subtitle: `${quo.quotationNo} • ${quo.customer?.name}`,
-            amount: quo.payment?.grandTotal, status: 'quote'
+            amount: quo.payment?.grandTotal
           });
         });
 
         activities.sort((a, b) => b.date - a.date);
-        const recentActivities = activities.slice(0, 10);
 
         setDashboardData({
           totalInvest: totalInvestVal,
@@ -160,7 +202,7 @@ const Dashboard = ({ onLogout }) => {
           totalCustomers: custRes.data.length,
           totalInvoices: invoices.length,
           totalQuotations: quotations.length,
-          recentActivities,
+          recentActivities: activities.slice(0, 8),
           monthlyData,
           topProducts,
           paymentStatus
@@ -171,6 +213,58 @@ const Dashboard = ({ onLogout }) => {
 
     if (isDashboardPage) fetchDashboardData();
   }, [isDashboardPage]);
+
+  // Handle Avatar Upload
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAdminData({ ...adminData, avatar: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Save Profile
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      const res = await axios.put('/admin-profile', adminData);
+      setAdminData(res.data);
+      showToast('success', 'Profile updated successfully!');
+      setShowProfileModal(false);
+    } catch (error) {
+      showToast('error', 'Failed to update profile!');
+    }
+    setSaving(false);
+  };
+
+  // Change Password
+  const handleChangePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      showToast('error', 'Passwords do not match!');
+      return;
+    }
+    if (passwordData.newPassword.length < 4) {
+      showToast('error', 'Password must be at least 4 characters!');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await axios.put('/change-password', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+      showToast('success', 'Password changed successfully!');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setShowProfileModal(false);
+    } catch (error) {
+      showToast('error', error.response?.data?.error || 'Failed to change password!');
+    }
+    setSaving(false);
+  };
 
   // Menu Items
   const menuItems = [
@@ -186,17 +280,14 @@ const Dashboard = ({ onLogout }) => {
     { id: 'Due List', label: 'Due Collection', icon: Wallet, path: '/due-list' },
   ];
 
-  // Chart Colors
-  const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
-
-  // Custom Tooltip for Charts
+  // Custom Tooltip
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white/95 backdrop-blur-xl p-4 rounded-2xl shadow-2xl border border-gray-100">
-          <p className="font-bold text-slate-800 mb-2">{label}</p>
+        <div className="bg-white p-3 rounded-xl shadow-lg border border-gray-100">
+          <p className="font-bold text-slate-800 text-sm mb-1">{label}</p>
           {payload.map((entry, index) => (
-            <p key={index} className="text-sm" style={{ color: entry.color }}>
+            <p key={index} className="text-xs font-medium" style={{ color: entry.color }}>
               {entry.name}: ৳{Number(entry.value).toLocaleString()}
             </p>
           ))}
@@ -210,13 +301,13 @@ const Dashboard = ({ onLogout }) => {
   const SidebarContent = ({ isMobile = false }) => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="h-20 flex items-center justify-between px-5 border-b border-gray-100/50">
+      <div className="h-20 flex items-center justify-between px-5 border-b border-gray-100">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="w-11 h-11 min-w-[44px] bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-900/30">
-            <Layers className="text-white w-6 h-6" />
+          <div className="w-10 h-10 min-w-[40px] bg-slate-900 rounded-xl flex items-center justify-center">
+            <Layers className="text-white w-5 h-5" />
           </div>
           {(isSidebarOpen || isMobile) && (
-            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <h2 className="text-[11px] font-black text-slate-900 leading-tight uppercase tracking-tight">
                 মেহেদী থাই অ্যালুমিনিয়াম<br />
                 <span className="text-[9px] text-slate-400 font-bold">এন্ড গ্লাস</span>
@@ -225,292 +316,483 @@ const Dashboard = ({ onLogout }) => {
           )}
         </div>
         {isMobile && (
-          <button onClick={() => setMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl">
+          <button onClick={() => setMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg">
             <X className="w-5 h-5 text-gray-500" />
           </button>
         )}
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto custom-scrollbar">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
           return (
-            <motion.button
+            <button
               key={item.id}
               onClick={() => { navigate(item.path); if (isMobile) setMobileMenuOpen(false); }}
-              whileHover={{ x: 4 }}
-              whileTap={{ scale: 0.98 }}
-              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative overflow-hidden ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 active
-                  ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg shadow-slate-900/30'
+                  ? 'bg-slate-900 text-white'
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              {active && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl"
-                  initial={false}
-                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                />
-              )}
-              <Icon className={`w-5 h-5 relative z-10 ${active ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
+              <Icon className={`w-5 h-5 ${active ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
               {(isSidebarOpen || isMobile) && (
-                <span className="font-semibold text-sm relative z-10 truncate">{item.label}</span>
+                <span className="font-semibold text-sm truncate">{item.label}</span>
               )}
               {(isSidebarOpen || isMobile) && active && (
-                <ChevronRight className="w-4 h-4 ml-auto relative z-10" />
+                <ChevronRight className="w-4 h-4 ml-auto" />
               )}
-            </motion.button>
+            </button>
           );
         })}
       </nav>
 
-      {/* Logout Button */}
-      <div className="p-4 border-t border-gray-100/50">
-        <motion.button
+      {/* Logout */}
+      <div className="p-4 border-t border-gray-100">
+        <button
           onClick={onLogout}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-500/25 hover:shadow-red-500/40 transition-shadow"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-sm transition-colors"
         >
           <LogOut className="w-5 h-5" />
           {(isSidebarOpen || isMobile) && <span>Logout</span>}
-        </motion.button>
+        </button>
       </div>
     </div>
+  );
+
+  // Profile Modal Component
+  const ProfileModal = () => (
+    <AnimatePresence>
+      {showProfileModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4"
+          onClick={() => setShowProfileModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+          >
+            {/* Modal Header */}
+            <div className="bg-slate-900 p-6 text-white relative">
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              {/* Avatar */}
+              <div className="flex flex-col items-center">
+                <div className="relative group">
+                  <div className="w-24 h-24 rounded-full bg-slate-700 border-4 border-white/20 overflow-hidden">
+                    {adminData.avatar ? (
+                      <img src={adminData.avatar} alt="Admin" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <User className="w-12 h-12" />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 w-8 h-8 bg-white text-slate-800 rounded-full flex items-center justify-center shadow-lg hover:bg-slate-100 transition-colors"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </div>
+                <h3 className="mt-3 text-lg font-bold">{adminData.name}</h3>
+                <p className="text-slate-400 text-sm">{adminData.role}</p>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-100">
+              <button
+                onClick={() => setProfileTab('profile')}
+                className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                  profileTab === 'profile'
+                    ? 'text-slate-900 border-b-2 border-slate-900'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                Profile Info
+              </button>
+              <button
+                onClick={() => setProfileTab('password')}
+                className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                  profileTab === 'password'
+                    ? 'text-slate-900 border-b-2 border-slate-900'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                Change Password
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            <div className="p-6">
+              {profileTab === 'profile' ? (
+                <div className="space-y-4">
+                  {/* Name */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input
+                        type="text"
+                        value={adminData.name}
+                        onChange={(e) => setAdminData({ ...adminData, name: e.target.value })}
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl font-medium text-slate-800 focus:border-slate-900 focus:bg-white outline-none transition-all"
+                        placeholder="Enter your name"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input
+                        type="email"
+                        value={adminData.email}
+                        onChange={(e) => setAdminData({ ...adminData, email: e.target.value })}
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl font-medium text-slate-800 focus:border-slate-900 focus:bg-white outline-none transition-all"
+                        placeholder="Enter your email"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      Phone Number
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input
+                        type="text"
+                        value={adminData.phone}
+                        onChange={(e) => setAdminData({ ...adminData, phone: e.target.value })}
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl font-medium text-slate-800 focus:border-slate-900 focus:bg-white outline-none transition-all"
+                        placeholder="Enter your phone"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleSaveProfile}
+                    disabled={saving}
+                    className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                  >
+                    {saving ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Save className="w-5 h-5" />
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Current Password */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      Current Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input
+                        type={showPasswords.current ? 'text' : 'password'}
+                        value={passwordData.currentPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                        className="w-full pl-12 pr-12 py-3 bg-slate-50 border-2 border-transparent rounded-xl font-medium text-slate-800 focus:border-slate-900 focus:bg-white outline-none transition-all"
+                        placeholder="Enter current password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* New Password */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input
+                        type={showPasswords.new ? 'text' : 'password'}
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                        className="w-full pl-12 pr-12 py-3 bg-slate-50 border-2 border-transparent rounded-xl font-medium text-slate-800 focus:border-slate-900 focus:bg-white outline-none transition-all"
+                        placeholder="Enter new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      Confirm New Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input
+                        type={showPasswords.confirm ? 'text' : 'password'}
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                        className="w-full pl-12 pr-12 py-3 bg-slate-50 border-2 border-transparent rounded-xl font-medium text-slate-800 focus:border-slate-900 focus:bg-white outline-none transition-all"
+                        placeholder="Confirm new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleChangePassword}
+                    disabled={saving}
+                    className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                  >
+                    {saving ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Lock className="w-5 h-5" />
+                        Change Password
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 
   // Dashboard Content
   const dashboardContent = (
     <div className="space-y-6 pb-10">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-3xl md:text-4xl font-black bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 bg-clip-text text-transparent"
-          >
-            ড্যাশবোর্ড ওভারভিউ
-          </motion.h2>
-          <p className="text-gray-500 font-medium mt-1">আজকের আর্থিক সারসংক্ষেপ এবং সাম্প্রতিক কার্যক্রম</p>
+          <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Overview</h2>
+          <p className="text-slate-500 font-medium mt-1">Financial summary & recent activities</p>
         </div>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex items-center gap-3 bg-white/80 backdrop-blur-xl px-5 py-3 rounded-2xl shadow-lg shadow-slate-200/50 border border-white"
-        >
-          <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
-            <Calendar className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 font-medium">আজকের তারিখ</p>
-            <p className="font-bold text-slate-800">{new Date().toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-          </div>
-        </motion.div>
+        <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-100 text-sm font-semibold text-slate-600">
+          <Clock className="w-4 h-4 text-slate-400" />
+          <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+        </div>
       </div>
 
-      {/* Main Stats Cards */}
+      {/* Main Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Total Sales Card */}
+        {/* Total Sales */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          whileHover={{ y: -5, scale: 1.02 }}
           onClick={() => navigate('/invoices')}
-          className="relative group cursor-pointer bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-6 rounded-3xl shadow-2xl shadow-emerald-500/30 overflow-hidden"
+          className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group"
         >
-          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20 group-hover:scale-150 transition-transform duration-500" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-16 -translate-x-16" />
-          <div className="relative z-10">
-            <div className="flex justify-between items-start mb-4">
-              <div className="w-14 h-14 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center">
-                <TrendingUp className="w-7 h-7 text-white" />
-              </div>
-              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-xl px-3 py-1.5 rounded-full">
-                <ArrowUpRight className="w-4 h-4 text-white" />
-                <span className="text-xs font-bold text-white">+12%</span>
-              </div>
+          <div className="flex justify-between items-start mb-4">
+            <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-emerald-600" />
             </div>
-            <p className="text-emerald-100 text-sm font-semibold uppercase tracking-wider mb-1">মোট বিক্রয়</p>
-            <h2 className="text-4xl font-black text-white tracking-tight">
-              ৳ {animatedValues.totalSales.toLocaleString()}
-            </h2>
-            <p className="text-emerald-200 text-xs mt-2 font-medium">গত মাসের তুলনায়</p>
+            <div className="flex items-center gap-1 text-emerald-600 text-xs font-bold">
+              <ArrowUpRight className="w-4 h-4" />
+              <span>Sales</span>
+            </div>
           </div>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total Sales</p>
+          <h2 className="text-3xl font-black text-slate-900">৳ {animatedValues.totalSales.toLocaleString()}</h2>
         </motion.div>
 
-        {/* Total Due Card */}
+        {/* Total Due */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          whileHover={{ y: -5, scale: 1.02 }}
           onClick={() => navigate('/due-list')}
-          className="relative group cursor-pointer bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 p-6 rounded-3xl shadow-2xl shadow-orange-500/30 overflow-hidden"
+          className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group"
         >
-          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20 group-hover:scale-150 transition-transform duration-500" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-16 -translate-x-16" />
-          <div className="relative z-10">
-            <div className="flex justify-between items-start mb-4">
-              <div className="w-14 h-14 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center">
-                <Wallet className="w-7 h-7 text-white" />
-              </div>
-              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-xl px-3 py-1.5 rounded-full">
-                <AlertTriangle className="w-4 h-4 text-white" />
-                <span className="text-xs font-bold text-white">বাকি</span>
-              </div>
+          <div className="flex justify-between items-start mb-4">
+            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+              <Wallet className="w-6 h-6 text-slate-600" />
             </div>
-            <p className="text-orange-100 text-sm font-semibold uppercase tracking-wider mb-1">মোট বাকি</p>
-            <h2 className="text-4xl font-black text-white tracking-tight">
-              ৳ {animatedValues.totalDue.toLocaleString()}
-            </h2>
-            <div className="mt-3 bg-white/20 rounded-full h-2 overflow-hidden">
-              <div
-                className="h-full bg-white rounded-full transition-all duration-1000"
-                style={{ width: `${dashboardData.totalSales > 0 ? ((dashboardData.totalSales - dashboardData.totalDue) / dashboardData.totalSales * 100) : 0}%` }}
-              />
+            <div className="flex items-center gap-1 text-slate-500 text-xs font-bold">
+              <span>Due</span>
             </div>
-            <p className="text-orange-200 text-xs mt-2 font-medium">
-              {dashboardData.totalSales > 0 ? Math.round((dashboardData.totalSales - dashboardData.totalDue) / dashboardData.totalSales * 100) : 0}% পরিশোধিত
-            </p>
           </div>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total Due</p>
+          <h2 className="text-3xl font-black text-slate-900">৳ {animatedValues.totalDue.toLocaleString()}</h2>
+          <div className="mt-3 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+              style={{ width: `${dashboardData.totalSales > 0 ? ((dashboardData.totalSales - dashboardData.totalDue) / dashboardData.totalSales * 100) : 0}%` }}
+            />
+          </div>
+          <p className="text-slate-400 text-xs mt-2 font-medium">
+            {dashboardData.totalSales > 0 ? Math.round((dashboardData.totalSales - dashboardData.totalDue) / dashboardData.totalSales * 100) : 0}% collected
+          </p>
         </motion.div>
 
-        {/* Total Investment Card */}
+        {/* Total Investment */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          whileHover={{ y: -5, scale: 1.02 }}
           onClick={() => navigate('/products')}
-          className="relative group cursor-pointer bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6 rounded-3xl shadow-2xl shadow-purple-500/30 overflow-hidden"
+          className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group"
         >
-          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20 group-hover:scale-150 transition-transform duration-500" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-16 -translate-x-16" />
-          <div className="relative z-10">
-            <div className="flex justify-between items-start mb-4">
-              <div className="w-14 h-14 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center">
-                <Briefcase className="w-7 h-7 text-white" />
-              </div>
-              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-xl px-3 py-1.5 rounded-full">
-                <Box className="w-4 h-4 text-white" />
-                <span className="text-xs font-bold text-white">স্টক</span>
-              </div>
+          <div className="flex justify-between items-start mb-4">
+            <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center">
+              <Briefcase className="w-6 h-6 text-white" />
             </div>
-            <p className="text-purple-100 text-sm font-semibold uppercase tracking-wider mb-1">মোট বিনিয়োগ</p>
-            <h2 className="text-4xl font-black text-white tracking-tight">
-              ৳ {animatedValues.totalInvest.toLocaleString()}
-            </h2>
-            <p className="text-purple-200 text-xs mt-2 font-medium">{dashboardData.totalProducts} টি প্রোডাক্ট স্টকে</p>
+            <div className="flex items-center gap-1 text-slate-500 text-xs font-bold">
+              <Box className="w-4 h-4" />
+              <span>Stock</span>
+            </div>
           </div>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total Investment</p>
+          <h2 className="text-3xl font-black text-slate-900">৳ {animatedValues.totalInvest.toLocaleString()}</h2>
         </motion.div>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'ইনভয়েস', count: dashboardData.totalInvoices, icon: Receipt, gradient: 'from-blue-500 to-cyan-500', shadow: 'shadow-blue-500/20' },
-          { label: 'কোটেশন', count: dashboardData.totalQuotations, icon: FileSpreadsheet, gradient: 'from-violet-500 to-purple-500', shadow: 'shadow-violet-500/20' },
-          { label: 'কাস্টমার', count: dashboardData.totalCustomers, icon: UserCheck, gradient: 'from-pink-500 to-rose-500', shadow: 'shadow-pink-500/20' },
-          { label: 'প্রোডাক্ট', count: dashboardData.totalProducts, icon: Box, gradient: 'from-teal-500 to-emerald-500', shadow: 'shadow-teal-500/20' }
+          { label: 'Invoices', count: dashboardData.totalInvoices, icon: Receipt, bg: 'bg-slate-900', text: 'text-white' },
+          { label: 'Quotations', count: dashboardData.totalQuotations, icon: FileSpreadsheet, bg: 'bg-slate-100', text: 'text-slate-600' },
+          { label: 'Clients', count: dashboardData.totalCustomers, icon: UserCheck, bg: 'bg-slate-100', text: 'text-slate-600' },
+          { label: 'Products', count: dashboardData.totalProducts, icon: Box, bg: 'bg-emerald-500', text: 'text-white' }
         ].map((item, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 * i }}
-            whileHover={{ scale: 1.05 }}
-            className={`bg-white p-5 rounded-2xl shadow-xl ${item.shadow} border border-gray-100/50 cursor-pointer group`}
+            className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4"
           >
-            <div className={`w-12 h-12 bg-gradient-to-br ${item.gradient} rounded-xl flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform`}>
-              <item.icon className="w-6 h-6 text-white" />
+            <div className={`w-11 h-11 ${item.bg} rounded-xl flex items-center justify-center`}>
+              <item.icon className={`w-5 h-5 ${item.text}`} />
             </div>
-            <h3 className="text-3xl font-black text-slate-800">{item.count}</h3>
-            <p className="text-sm text-gray-500 font-medium">{item.label}</p>
+            <div>
+              <h3 className="text-2xl font-black text-slate-900">{item.count}</h3>
+              <p className="text-xs text-slate-400 font-semibold">{item.label}</p>
+            </div>
           </motion.div>
         ))}
       </div>
 
-      {/* Charts Section */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sales Trend Chart */}
+        {/* Sales Trend */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="lg:col-span-2 bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/50 border border-gray-100/50"
+          className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100"
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                <Activity className="w-6 h-6 text-indigo-500" />
-                বিক্রয় ট্রেন্ড
-              </h3>
-              <p className="text-sm text-gray-500 font-medium mt-1">গত ৬ মাসের বিক্রয় বিশ্লেষণ</p>
+              <h3 className="text-lg font-black text-slate-900">Sales Trend</h3>
+              <p className="text-sm text-slate-400 font-medium">Last 6 months analysis</p>
             </div>
             <div className="flex items-center gap-4 text-xs font-bold">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-indigo-500 rounded-full" />
-                <span className="text-gray-600">বিক্রয়</span>
+                <div className="w-3 h-3 bg-slate-900 rounded-full" />
+                <span className="text-slate-500">Sales</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-emerald-500 rounded-full" />
-                <span className="text-gray-600">পরিশোধিত</span>
+                <span className="text-slate-500">Paid</span>
               </div>
             </div>
           </div>
-          <div className="h-72">
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={dashboardData.monthlyData}>
                 <defs>
-                  <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                  <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0f172a" stopOpacity={0.1} />
+                    <stop offset="95%" stopColor="#0f172a" stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="paidGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                  <linearGradient id="paidGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} fontWeight={600} />
-                <YAxis stroke="#94a3b8" fontSize={12} fontWeight={600} tickFormatter={(value) => `৳${(value / 1000).toFixed(0)}k`} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(value) => `৳${(value / 1000).toFixed(0)}k`} />
                 <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="sales" name="বিক্রয়" stroke="#6366f1" strokeWidth={3} fill="url(#salesGradient)" />
-                <Area type="monotone" dataKey="paid" name="পরিশোধিত" stroke="#10b981" strokeWidth={3} fill="url(#paidGradient)" />
+                <Area type="monotone" dataKey="sales" name="Sales" stroke="#0f172a" strokeWidth={2} fill="url(#salesGrad)" />
+                <Area type="monotone" dataKey="paid" name="Paid" stroke="#10b981" strokeWidth={2} fill="url(#paidGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
 
-        {/* Payment Status Pie Chart */}
+        {/* Payment Status */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/50 border border-gray-100/50"
+          className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"
         >
-          <div className="mb-6">
-            <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
-              <PieChart className="w-6 h-6 text-pink-500" />
-              পেমেন্ট স্ট্যাটাস
-            </h3>
-            <p className="text-sm text-gray-500 font-medium mt-1">পরিশোধিত vs বাকি</p>
-          </div>
-          <div className="h-56">
+          <h3 className="text-lg font-black text-slate-900 mb-1">Payment Status</h3>
+          <p className="text-sm text-slate-400 font-medium mb-4">Paid vs Due</p>
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <RechartsPie>
                 <Pie
                   data={dashboardData.paymentStatus}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
+                  innerRadius={50}
+                  outerRadius={75}
                   paddingAngle={5}
                   dataKey="value"
                 >
@@ -522,102 +804,84 @@ const Dashboard = ({ onLogout }) => {
               </RechartsPie>
             </ResponsiveContainer>
           </div>
-          <div className="flex justify-center gap-6 mt-4">
+          <div className="flex justify-center gap-6 mt-2">
             {dashboardData.paymentStatus.map((item, i) => (
               <div key={i} className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="text-sm font-bold text-gray-600">{item.name}</span>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                <span className="text-xs font-bold text-slate-500">{item.name}</span>
               </div>
             ))}
           </div>
         </motion.div>
       </div>
 
-      {/* Second Row Charts */}
+      {/* Bottom Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Products Bar Chart */}
+        {/* Top Products */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/50 border border-gray-100/50"
+          className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"
         >
-          <div className="mb-6">
-            <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
-              <BarChart3 className="w-6 h-6 text-violet-500" />
-              টপ প্রোডাক্ট (মূল্য অনুযায়ী)
-            </h3>
-            <p className="text-sm text-gray-500 font-medium mt-1">সর্বাধিক মূল্যবান স্টক</p>
-          </div>
-          <div className="h-64">
+          <h3 className="text-lg font-black text-slate-900 mb-1">Top Products</h3>
+          <p className="text-sm text-slate-400 font-medium mb-4">By stock value</p>
+          <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dashboardData.topProducts} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                <XAxis type="number" stroke="#94a3b8" fontSize={12} tickFormatter={(value) => `৳${(value / 1000).toFixed(0)}k`} />
-                <YAxis type="category" dataKey="name" stroke="#94a3b8" fontSize={11} fontWeight={600} width={100} />
+                <XAxis type="number" stroke="#94a3b8" fontSize={11} tickFormatter={(value) => `৳${(value / 1000).toFixed(0)}k`} />
+                <YAxis type="category" dataKey="name" stroke="#94a3b8" fontSize={11} fontWeight={600} width={80} />
                 <Tooltip formatter={(value) => `৳${Number(value).toLocaleString()}`} />
-                <Bar dataKey="value" name="মূল্য" radius={[0, 8, 8, 0]}>
-                  {dashboardData.topProducts.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
+                <Bar dataKey="value" name="Value" fill="#0f172a" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
 
-        {/* Recent Activities */}
+        {/* Recent Activity */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-gray-100/50 overflow-hidden"
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
         >
-          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-gray-50">
-            <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
-              <History className="w-6 h-6 text-slate-500" />
-              সাম্প্রতিক কার্যক্রম
+          <div className="p-5 border-b border-gray-100">
+            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+              <History className="w-5 h-5 text-slate-400" /> Recent Activity
             </h3>
-            <p className="text-sm text-gray-500 font-medium mt-1">রিয়েল-টাইম অ্যাক্টিভিটি লগ</p>
+            <p className="text-sm text-slate-400 font-medium">Real-time activity log</p>
           </div>
-          <div className="max-h-80 overflow-y-auto custom-scrollbar">
+          <div className="max-h-72 overflow-y-auto custom-scrollbar">
             {dashboardData.recentActivities.length === 0 ? (
-              <div className="p-12 text-center text-gray-400 font-bold">
-                <Box className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                কোনো কার্যক্রম নেই
+              <div className="p-10 text-center text-slate-400 font-semibold">
+                <Box className="w-10 h-10 mx-auto mb-3 text-slate-300" />
+                No activity found
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
                 {dashboardData.recentActivities.map((act, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.05 * i }}
-                    className="flex items-center gap-4 p-4 hover:bg-slate-50/80 transition-colors cursor-pointer group"
-                  >
-                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg ${
-                      act.type === 'Payment' ? 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-emerald-500/30' :
-                      act.type === 'Invoice' ? 'bg-gradient-to-br from-blue-400 to-indigo-500 shadow-blue-500/30' :
-                      'bg-gradient-to-br from-orange-400 to-amber-500 shadow-orange-500/30'
+                  <div key={i} className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      act.type === 'Payment' ? 'bg-emerald-50 text-emerald-600' :
+                      act.type === 'Invoice' ? 'bg-slate-100 text-slate-600' :
+                      'bg-slate-50 text-slate-500'
                     }`}>
-                      {act.type === 'Payment' ? <HandCoins className="w-5 h-5 text-white" /> :
-                       act.type === 'Invoice' ? <FileText className="w-5 h-5 text-white" /> :
-                       <FileSpreadsheet className="w-5 h-5 text-white" />}
+                      {act.type === 'Payment' ? <HandCoins className="w-5 h-5" /> :
+                       act.type === 'Invoice' ? <FileText className="w-5 h-5" /> :
+                       <FileSpreadsheet className="w-5 h-5" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-slate-800 text-sm truncate">{act.title}</p>
-                      <p className="text-xs text-gray-500 font-medium truncate">{act.subtitle}</p>
+                      <p className="text-xs text-slate-400 font-medium truncate">{act.subtitle}</p>
                     </div>
                     <div className="text-right">
                       <p className={`font-black text-sm ${act.type === 'Payment' ? 'text-emerald-600' : 'text-slate-700'}`}>
                         {act.type === 'Payment' ? '+' : ''} ৳{Number(act.amount).toLocaleString()}
                       </p>
-                      <p className="text-[10px] text-gray-400 font-medium">
-                        {act.date.toLocaleDateString('bn-BD')}
-                      </p>
+                      <p className="text-[10px] text-slate-400 font-medium">{act.date.toLocaleDateString()}</p>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             )}
@@ -628,12 +892,23 @@ const Dashboard = ({ onLogout }) => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 flex font-sans text-gray-800 overflow-hidden relative">
-      {/* Background Decoration */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-indigo-200/30 to-purple-200/30 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-emerald-200/30 to-teal-200/30 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-[#f8fafc] flex font-sans text-gray-800 overflow-hidden relative">
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, x: '-50%' }}
+            animate={{ opacity: 1, y: 20, x: '-50%' }}
+            exit={{ opacity: 0, y: -50, x: '-50%' }}
+            className="fixed top-0 left-1/2 z-[10001] flex items-center gap-3 bg-slate-800 text-white px-5 py-3 rounded-xl shadow-xl"
+          >
+            <div className={`p-1.5 rounded-full ${toast.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+              {toast.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+            </div>
+            <span className="font-semibold text-sm">{toast.text}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Welcome Toast */}
       <AnimatePresence>
@@ -642,20 +917,23 @@ const Dashboard = ({ onLogout }) => {
             initial={{ opacity: 0, y: -50, x: '-50%' }}
             animate={{ opacity: 1, y: 20, x: '-50%' }}
             exit={{ opacity: 0, y: -50, x: '-50%' }}
-            className="fixed top-0 left-1/2 z-[10000] flex items-center gap-3 bg-white/95 backdrop-blur-xl px-6 py-4 rounded-2xl shadow-2xl shadow-slate-900/10 border border-white"
+            className="fixed top-0 left-1/2 z-[10000] flex items-center gap-3 bg-white px-5 py-3 rounded-xl shadow-xl border border-gray-100"
           >
-            <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-full">
+              <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-black text-slate-800">স্বাগতম, মেহেদী!</h4>
-              <p className="text-sm text-gray-500 font-medium">{welcomeToast}</p>
+              <h4 className="font-bold text-slate-800 text-sm">Hello, {adminData.name}!</h4>
+              <p className="text-xs text-slate-400 font-medium">{welcomeToast}</p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Mobile Menu Overlay */}
+      {/* Profile Modal */}
+      <ProfileModal />
+
+      {/* Mobile Overlay */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -663,75 +941,70 @@ const Dashboard = ({ onLogout }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setMobileMenuOpen(false)}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
           />
         )}
       </AnimatePresence>
 
       {/* Sidebar */}
       <motion.aside
-        className={`fixed md:static inset-y-0 left-0 z-50 h-screen bg-white/80 backdrop-blur-xl border-r border-white/50 shadow-2xl shadow-slate-900/5 transition-all duration-300 ${
+        className={`fixed md:static inset-y-0 left-0 z-50 h-screen bg-white border-r border-gray-200 shadow-lg transition-all duration-300 ${
           isMobileMenuOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0'
         } ${isSidebarOpen ? 'md:w-72' : 'md:w-24'}`}
       >
         <SidebarContent isMobile={isMobileMenuOpen} />
       </motion.aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden relative z-10">
+      {/* Main */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Header */}
-        <header className="h-20 bg-white/70 backdrop-blur-xl flex items-center justify-between px-4 md:px-8 border-b border-white/50 shadow-lg shadow-slate-900/5">
+        <header className="h-20 bg-white/80 backdrop-blur-md flex items-center justify-between px-4 md:px-8 border-b border-gray-200">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2.5 bg-white rounded-xl shadow-lg text-gray-600 border border-gray-100 hover:bg-gray-50 transition-colors"
+              className="md:hidden p-2 bg-white rounded-lg shadow-sm text-gray-600 border border-gray-200"
             >
               <Menu className="w-6 h-6" />
             </button>
             <button
               onClick={() => setSidebarOpen(!isSidebarOpen)}
-              className="hidden md:flex p-2.5 bg-white rounded-xl shadow-lg text-gray-600 border border-gray-100 hover:bg-gray-50 transition-colors"
+              className="hidden md:block p-2 bg-white rounded-lg shadow-sm text-gray-600 border border-gray-200 hover:bg-gray-50"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <h1 className="text-xl md:text-2xl font-black bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+            <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight truncate">
               {isDashboardPage ? 'Dashboard' : ''}
             </h1>
           </div>
-          <div className="flex items-center gap-3 md:gap-5">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative p-3 bg-white rounded-xl shadow-lg text-gray-600 border border-gray-100 hover:bg-gray-50 transition-colors"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-red-500 to-rose-500 rounded-full text-[10px] text-white font-bold flex items-center justify-center shadow-lg shadow-red-500/30">
-                3
-              </span>
-            </motion.button>
-            <div className="flex items-center gap-3 bg-white/80 backdrop-blur-xl pl-4 pr-2 py-2 rounded-2xl shadow-lg border border-white">
-              <div className="text-right hidden md:block">
-                <h4 className="text-sm font-black text-slate-800">Mehedi Hasan</h4>
-                <p className="text-xs text-gray-500 font-medium">Admin</p>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 border-2 border-white shadow-lg shadow-indigo-500/30 overflow-hidden">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Admin" className="w-full h-full object-cover" />
-              </div>
+          <div className="flex items-center gap-3 md:gap-6">
+            <div className="text-right hidden md:block">
+              <h4 className="text-sm font-bold text-slate-800">{adminData.name}</h4>
+              <p className="text-xs text-gray-500">{adminData.role}</p>
             </div>
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden hover:ring-2 hover:ring-slate-300 transition-all"
+            >
+              {adminData.avatar ? (
+                <img src={adminData.avatar} alt="Admin" className="w-full h-full object-cover" />
+              ) : (
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Admin" className="w-full h-full object-cover" />
+              )}
+            </button>
           </div>
         </header>
 
-        {/* Main Area */}
+        {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
           {isDashboardPage ? dashboardContent : <Outlet />}
         </main>
       </div>
 
-      {/* Custom Scrollbar Styles */}
+      {/* Scrollbar Style */}
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
+          width: 5px;
+          height: 5px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
