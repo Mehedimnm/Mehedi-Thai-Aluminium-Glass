@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* --- ১. কালপুরুষ ফন্ট সেটআপ (এটি যেমন আছে তেমনই থাকবে) --- */
+/* --- 1. Kalpurush Font Setup --- */
 @font-face {
   font-family: 'Kalpurush';
   src: url('./assets/fonts/Kalpurush.ttf') format('truetype');
@@ -10,19 +10,409 @@
   font-style: normal;
 }
 
-/* --- ২. বডি স্টাইল আপডেট --- */
+/* --- 2. Body Style --- */
 body {
-  /* ✅ ফিক্স: ইংরেজি আগে, বাংলা পরে */
-  font-family: ui-sans-serif, system-ui, sans-serif, 'Kalpurush';
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Kalpurush';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* --- ৩. প্রিন্ট স্টাইল (অপরিবর্তিত) --- */
+/* --- 3. Hide Scrollbar Completely --- */
+.scrollbar-hide {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Global Scrollbar Hide */
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* --- 4. Smooth Scroll --- */
+html {
+  scroll-behavior: smooth;
+}
+
+/* --- 5. Selection Color --- */
+::selection {
+  background-color: #1e293b;
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background-color: #1e293b;
+  color: #ffffff;
+}
+
+/* --- 6. Focus Outline --- */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #1e293b;
+  outline-offset: 2px;
+}
+
+/* --- 7. Input Autofill Style --- */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #f8fafc inset !important;
+  -webkit-text-fill-color: #1e293b !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* --- 8. Number Input Spinner Hide --- */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* --- 9. Custom Animations --- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* --- 10. Glass Effect --- */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.glass-dark {
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* --- 11. Card Hover Effects --- */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* --- 12. Button Press Effect --- */
+.btn-press {
+  transition: transform 0.1s ease;
+}
+
+.btn-press:active {
+  transform: scale(0.98);
+}
+
+/* --- 13. Gradient Text --- */
+.gradient-text {
+  background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* --- 14. Border Gradient --- */
+.border-gradient {
+  border: 2px solid transparent;
+  background: linear-gradient(white, white) padding-box,
+              linear-gradient(135deg, #1e293b, #475569) border-box;
+}
+
+/* --- 15. Skeleton Loading --- */
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* --- 16. Tooltip Style --- */
+.tooltip {
+  position: relative;
+}
+
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  background: #1e293b;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  margin-bottom: 8px;
+}
+
+.tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* --- 17. Table Styles --- */
+.table-row-hover tr {
+  transition: background-color 0.15s ease;
+}
+
+.table-row-hover tr:hover {
+  background-color: #f8fafc;
+}
+
+/* --- 18. Form Input Focus Ring --- */
+.input-focus-ring {
+  transition: all 0.2s ease;
+}
+
+.input-focus-ring:focus {
+  border-color: #1e293b;
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+}
+
+/* --- 19. Badge Styles --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 6px;
+}
+
+.badge-success {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.badge-warning {
+  background-color: #fffbeb;
+  color: #d97706;
+}
+
+.badge-danger {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.badge-info {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+/* --- 20. Custom Checkbox --- */
+.custom-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #cbd5e1;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-checkbox:checked {
+  background-color: #1e293b;
+  border-color: #1e293b;
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+}
+
+.custom-checkbox:hover {
+  border-color: #94a3b8;
+}
+
+/* --- 21. Toggle Switch --- */
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background-color: #cbd5e1;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-switch.active {
+  background-color: #10b981;
+}
+
+.toggle-switch.active::after {
+  transform: translateX(20px);
+}
+
+/* --- 22. Dropdown Animation --- */
+.dropdown-enter {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.95);
+}
+
+.dropdown-enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: all 0.2s ease;
+}
+
+.dropdown-exit {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.dropdown-exit-active {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.95);
+  transition: all 0.2s ease;
+}
+
+/* --- 23. Modal Backdrop --- */
+.modal-backdrop {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* --- 24. Progress Bar --- */
+.progress-bar {
+  height: 8px;
+  background-color: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #059669);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+/* --- 25. Ripple Effect --- */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.ripple:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* --- 26. Print Styles --- */
 @media print {
   body * {
     visibility: hidden;
   }
 
-  #invoice-print-area, #invoice-print-area * {
+  #invoice-print-area,
+  #invoice-print-area * {
     visibility: visible;
   }
 
@@ -39,7 +429,7 @@ body {
     height: 297mm;
     margin: 0;
     padding-left: 10mm !important;
-    padding-right: 15mm !important; 
+    padding-right: 15mm !important;
     padding-top: 10mm !important;
     padding-bottom: 10mm !important;
     background: white;
@@ -47,8 +437,52 @@ body {
     box-sizing: border-box;
   }
 
-  html, body {
+  html,
+  body {
     height: 297mm;
     overflow: hidden;
+  }
+
+  /* Hide scrollbars in print */
+  *::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+/* --- 27. Responsive Typography --- */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1536px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+/* --- 28. Dark Mode Support (Optional) --- */
+@media (prefers-color-scheme: dark) {
+  .dark-mode-support {
+    /* Add dark mode styles here if needed */
+  }
+}
+
+/* --- 29. Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --- 30. High Contrast Mode --- */
+@media (prefers-contrast: high) {
+  .high-contrast {
+    border-width: 2px;
   }
 }
