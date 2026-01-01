@@ -134,7 +134,7 @@ const QuotationDesign = ({ quotationData }) => {
               <th style={{...headerCellStyle, width: '10%'}}>পরিমাণ (পিছ)</th>
               
               <th style={{...headerCellStyle, width: '12%'}}>দর</th>
-              <th style={{...headerCellStyle, width: '14%', borderRight: 'none', textAlign: 'right', paddingRight: '10px'}}>মোট</th>
+              <th style={{...headerCellStyle, width: '14%', borderRight: 'none', textAlign: 'right', paddingRight: '10px'}}>মোট টাকা</th>
             </tr>
           </thead>
           <tbody>
