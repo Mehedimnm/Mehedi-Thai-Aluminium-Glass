@@ -42,10 +42,10 @@ const Dashboard = ({ onLogout }) => {
     const fetchDashboardData = async () => {
       try {
         const [prodRes, custRes, invRes, quotRes] = await Promise.all([
-          axios.get('http://localhost:3001/products'),
-          axios.get('http://localhost:3001/customers'),
-          axios.get('http://localhost:3001/invoices'),
-          axios.get('http://localhost:3001/quotations')
+          axios.get('/products'),
+          axios.get('/customers'),
+          axios.get('/invoices'),
+          axios.get('/quotations')
         ]);
         
         const products = prodRes.data;

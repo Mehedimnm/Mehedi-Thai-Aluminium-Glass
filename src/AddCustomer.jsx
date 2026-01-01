@@ -33,7 +33,7 @@ const AddCustomer = () => {
 
     try {
       // ২. ডুপ্লিকেট চেক
-      const checkRes = await axios.get('http://localhost:3001/customers');
+      const checkRes = await axios.get('/customers');
       const existingCustomers = checkRes.data;
 
       const isNameDuplicate = existingCustomers.some(c => c.name.toLowerCase() === formData.name.trim().toLowerCase());

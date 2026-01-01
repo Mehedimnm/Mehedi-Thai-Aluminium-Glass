@@ -23,7 +23,7 @@ const InvoiceList = ({ onEdit }) => {
 
   const fetchInvoices = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/invoices');
+      const res = await axios.get('/invoices');
       setInvoices(res.data);
       setLoading(false);
     } catch (err) {
@@ -40,7 +40,7 @@ const InvoiceList = ({ onEdit }) => {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await axios.delete(`http://localhost:3001/delete-invoice/${deleteId}`);
+      await axios.delete(`/delete-invoice/${deleteId}`);
       setInvoices(invoices.filter(inv => inv._id !== deleteId));
       setDeleteId(null);
       showMessage('success', 'Invoice Deleted Successfully!');

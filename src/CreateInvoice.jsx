@@ -133,8 +133,8 @@ const CreateInvoice = ({ editData }) => {
     const fetchData = async () => {
       try {
         const [prodRes, custRes] = await axios.all([
-          axios.get('http://localhost:3001/products'), 
-          axios.get('http://localhost:3001/customers')
+          axios.get('/products'), 
+          axios.get('/customers')
         ]);
         setProducts(Array.isArray(prodRes.data) ? prodRes.data : []); 
         setCustomers(Array.isArray(custRes.data) ? custRes.data : []);
@@ -240,7 +240,7 @@ const CreateInvoice = ({ editData }) => {
           payment: { subTotal, discount, grandTotal, paid, due, method: paymentMethod } 
       };
       
-      const res = await axios.post('http://localhost:3001/create-invoice', invoiceData);
+      const res = await axios.post('/create-invoice', invoiceData);
       
       if (res.data.status === 'Success') {
         const newData = res.data.data;
@@ -268,7 +268,7 @@ const CreateInvoice = ({ editData }) => {
           payment: { subTotal, discount, grandTotal, paid, due, method: paymentMethod } 
       };
       
-      const res = await axios.put(`http://localhost:3001/update-invoice/${editingInvoiceId}`, invoiceData);
+      const res = await axios.put(`/update-invoice/${editingInvoiceId}`, invoiceData);
       if(res.data.status === "Success") { showMessage('success', 'Updated Successfully!'); } 
       else { showMessage('error', 'Update Failed!'); }
     } catch (err) { showMessage('error', 'Server Error!'); }

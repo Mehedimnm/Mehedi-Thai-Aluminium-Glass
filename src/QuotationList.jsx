@@ -23,7 +23,7 @@ const QuotationList = ({ onEdit }) => {
 
   const fetchQuotations = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/quotations');
+      const res = await axios.get('/quotations');
       setQuotations(res.data);
       setLoading(false);
     } catch (err) {
@@ -40,7 +40,7 @@ const QuotationList = ({ onEdit }) => {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await axios.delete(`http://localhost:3001/delete-quotation/${deleteId}`);
+      await axios.delete(`/delete-quotation/${deleteId}`);
       setQuotations(quotations.filter(q => q._id !== deleteId));
       setDeleteId(null);
       showMessage('success', 'Quotation Deleted Successfully!');

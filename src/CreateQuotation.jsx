@@ -127,8 +127,8 @@ const CreateQuotation = ({ editData }) => {
     const fetchData = async () => {
       try {
         const [prodRes, custRes] = await axios.all([
-          axios.get('http://localhost:3001/products'), 
-          axios.get('http://localhost:3001/customers')
+          axios.get('/products'), 
+          axios.get('/customers')
         ]);
         setProducts(Array.isArray(prodRes.data) ? prodRes.data : []); 
         setCustomers(Array.isArray(custRes.data) ? custRes.data : []);
@@ -228,7 +228,7 @@ const CreateQuotation = ({ editData }) => {
           payment: { subTotal, discount, grandTotal, paid: 0, due: grandTotal } 
       };
       
-      const res = await axios.post('http://localhost:3001/create-quotation', quotationData);
+      const res = await axios.post('/create-quotation', quotationData);
       
       if (res.data.status === 'Success') {
         const newData = res.data.data;
@@ -256,7 +256,7 @@ const CreateQuotation = ({ editData }) => {
           payment: { subTotal, discount, grandTotal, paid: 0, due: grandTotal } 
       };
       
-      const res = await axios.put(`http://localhost:3001/update-quotation/${editingQuotationId}`, quotationData);
+      const res = await axios.put(`/update-quotation/${editingQuotationId}`, quotationData);
       if(res.data.status === "Success") { showMessage('success', 'Updated Successfully!'); } 
       else { showMessage('error', 'Update Failed!'); }
     } catch (err) { showMessage('error', 'Server Error!'); }

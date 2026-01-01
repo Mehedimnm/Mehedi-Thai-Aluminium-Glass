@@ -25,7 +25,7 @@ const ProductList = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/products');
+      const res = await axios.get('/products');
       const data = res.data;
       setProducts(data);
       calculateStats(data);
@@ -54,7 +54,7 @@ const ProductList = () => {
   const executeDelete = async () => {
     setProcessing(true);
     try {
-      await axios.delete(`http://localhost:3001/delete-product/${deleteId}`);
+      await axios.delete(`/delete-product/${deleteId}`);
       const updatedList = products.filter(p => p._id !== deleteId);
       setProducts(updatedList);
       calculateStats(updatedList);
@@ -81,7 +81,7 @@ const ProductList = () => {
 
     setProcessing(true);
     try {
-      const res = await axios.put(`http://localhost:3001/update-product/${editFormData._id}`, editFormData);
+      const res = await axios.put(`/update-product/${editFormData._id}`, editFormData);
       if(res.data) {
           const updatedList = products.map(p => p._id === editFormData._id ? editFormData : p);
           setProducts(updatedList);

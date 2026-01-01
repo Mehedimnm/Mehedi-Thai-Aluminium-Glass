@@ -96,7 +96,7 @@ const DueList = () => {
   const fetchDueInvoices = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:3001/invoices');
+      const res = await axios.get('/invoices');
       const dueData = res.data.filter(inv => inv.payment?.due > 0);
       setInvoices(dueData);
     } catch (err) {
@@ -165,7 +165,7 @@ const DueList = () => {
             }
         };
 
-        const res = await axios.put(`http://localhost:3001/update-invoice/${selectedInvoice._id}`, updatedInvoice);
+        const res = await axios.put(`/update-invoice/${selectedInvoice._id}`, updatedInvoice);
 
         if (res.data.status === "Success") {
             showSuccess('Payment Collected Successfully!');
@@ -181,7 +181,7 @@ const DueList = () => {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await axios.delete(`http://localhost:3001/delete-invoice/${deleteId}`);
+      await axios.delete(`/delete-invoice/${deleteId}`);
       setInvoices(invoices.filter(inv => inv._id !== deleteId));
       setDeleteId(null);
       showSuccess("Record Deleted!");

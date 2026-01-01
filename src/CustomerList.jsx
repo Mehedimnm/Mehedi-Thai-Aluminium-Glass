@@ -20,7 +20,7 @@ const CustomerList = ({ onAddNew }) => {
   const fetchCustomers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:3001/customers');
+      const response = await axios.get('/customers');
       setCustomers(response.data);
     } catch (err) {
       setError("Failed to load customer data.");
@@ -39,7 +39,7 @@ const CustomerList = ({ onAddNew }) => {
 
   const executeDelete = async () => {
     try {
-      await axios.delete(`http://localhost:3001/delete-customer/${deleteId}`);
+      await axios.delete(`/delete-customer/${deleteId}`);
       setDeleteId(null);
       fetchCustomers();
       showSuccess("Customer Deleted Successfully!");
@@ -52,7 +52,7 @@ const CustomerList = ({ onAddNew }) => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:3001/update-customer/${editingCustomer._id}`, editingCustomer);
+      await axios.put(`/update-customer/${editingCustomer._id}`, editingCustomer);
       setEditingCustomer(null);
       fetchCustomers();
       showSuccess("Customer Profile Updated!");
