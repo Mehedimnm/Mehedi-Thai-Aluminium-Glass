@@ -10,7 +10,7 @@ import {
   FileText, AlertTriangle, CreditCard, Wallet, List 
 } from 'lucide-react';
 
-// --- ১. প্রিমিয়াম ড্রপডাউন ---
+// --- ১. প্রিমিয়াম ড্রপডাউন ---
 const PremiumDropdown = ({ options = [], value, onChange, placeholder, icon: Icon, type }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -169,14 +169,14 @@ const CreateInvoice = ({ editData }) => {
     }
   };
 
-  // বিবরণ ইনসার্ট করা (* মার্ক দিয়ে)
+  // বিবরণ ইনসার্ট করা (* মার্ক দিয়ে)
   const insertDescription = () => {
     if (selectedDescItems.length === 0) {
         setShowDescModal(false);
         return;
     }
     
-    // ✅ ফিক্স: সিরিয়াল নাম্বারের বদলে * মার্ক ব্যবহার করা হয়েছে
+    // ✅ ফিক্স: সিরিয়াল নাম্বারের বদলে * মার্ক ব্যবহার করা হয়েছে
     const formattedText = selectedDescItems.map(item => `* ${item}`).join('\n');
     
     setDescription(prev => prev ? prev + '\n' + formattedText : formattedText);
@@ -300,7 +300,7 @@ const CreateInvoice = ({ editData }) => {
   const showMessage = (type, text) => { setMessage({ type, text }); setTimeout(() => setMessage(null), 3000); };
 
   return (
-    <div className="flex flex-col h-full md:h-[calc(100vh-120px)] relative overflow-y-auto md:overflow-hidden pb-24 md:pb-0 bg-[#f8fafc]">
+    <div className="flex flex-col min-h-full relative overflow-y-auto pb-24 md:pb-4 bg-[#f8fafc]">
       
       {/* --- TOAST --- */}
       <AnimatePresence>
