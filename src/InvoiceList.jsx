@@ -58,6 +58,15 @@ const InvoiceList = ({ onEdit }) => {
     });
   };
 
+  // ✅ Fix: Edit handler with navigation
+  const handleEdit = (invoice) => {
+    if (onEdit) {
+      onEdit(invoice);
+    } else {
+      navigate('/create-invoice', { state: { editData: invoice } });
+    }
+  };
+
   const filteredInvoices = invoices.filter(inv => 
     (inv.invoiceNo && inv.invoiceNo.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (inv.customer?.name && inv.customer.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -115,19 +124,20 @@ const InvoiceList = ({ onEdit }) => {
       </div>
 
       {/* --- TABLE AREA --- */}
-      <div className="flex-1 overflow-x-auto custom-scrollbar p-2">
+      <div className="flex-1 overflow-auto custom-scrollbar p-2">
         
         {/* min-w-[1100px] to accommodate new column */}
         <table className="w-full text-left border-collapse min-w-[1100px]">
-          <thead className="sticky top-0 z-10">
-            <tr className="bg-gray-50/90 backdrop-blur-sm border-b border-gray-200">
-              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap first:pl-8">Date & ID</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Customer Info</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Items</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right whitespace-nowrap">Total Amount</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right whitespace-nowrap">Paid</th> {/* ✅ NEW COLUMN */}
-              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Status</th>
-              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right last:pr-8 whitespace-nowrap">Actions</th>
+          {/* ✅ Fix: Added bg-white to thead to prevent content showing through */}
+          <thead className="sticky top-0 z-10 bg-white">
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap first:pl-8 bg-gray-50">Date & ID</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap bg-gray-50">Customer Info</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap bg-gray-50">Items</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right whitespace-nowrap bg-gray-50">Total Amount</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right whitespace-nowrap bg-gray-50">Paid</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap bg-gray-50">Status</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right last:pr-8 whitespace-nowrap bg-gray-50">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 text-sm">
@@ -187,7 +197,8 @@ const InvoiceList = ({ onEdit }) => {
                       <button onClick={() => handlePrint(item)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition border border-transparent hover:border-gray-200">
                         <Printer className="w-4 h-4" />
                       </button>
-                      <button onClick={() => onEdit(item)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition border border-transparent hover:border-gray-200">
+                      {/* ✅ Fix: Changed onClick to use handleEdit function */}
+                      <button onClick={() => handleEdit(item)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition border border-transparent hover:border-gray-200">
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button onClick={() => setDeleteId(item._id)} className="p-2 rounded-lg text-slate-400 hover:bg-gray-100 hover:text-slate-800 transition border border-transparent hover:border-gray-200">
