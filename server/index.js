@@ -1,11 +1,11 @@
-const express = require('express');
+const express = require('express'); // ✅ Fixed: 'const' instead of 'Const'
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path'); 
 require('dotenv').config(); 
 
 const app = express();
-app.use(express.json({ limit: '10mb' })); // বড় ইমেজ আপলোডের জন্য limit বাড়ানো হয়েছে
+app.use(express.json({ limit: '10mb' })); // বড় ইমেজ আপলোডের জন্য
 app.use(cors());
 
 // --- 1. Database Connection ---
@@ -22,12 +22,12 @@ mongoose.connect(mongoUri)
 const UserSchema = new mongoose.Schema({ username: String, pass: String });
 const UserModel = mongoose.model("users", UserSchema);
 
-// ✅ Admin Profile Model (নতুন যুক্ত করা হয়েছে)
+// Admin Profile Model
 const AdminSchema = new mongoose.Schema({
     name: { type: String, default: 'Mehedi Hasan' },
     email: { type: String, default: '' },
     phone: { type: String, default: '' },
-    avatar: { type: String, default: '' }, // Base64 ইমেজ স্টোর হবে
+    avatar: { type: String, default: '' },
     role: { type: String, default: 'Admin' }
 }, { timestamps: true });
 const AdminModel = mongoose.model("Admin", AdminSchema);
@@ -129,10 +129,10 @@ const QuotationSchema = new mongoose.Schema({
 const QuotationModel = mongoose.model("Quotation", QuotationSchema);
 
 
-// --- 3. API ROUTES ---
+// --- 3. API ROUTES (Updated with /api prefix) ---
 
 // Login API
-app.post('/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     const user = await UserModel.findOne({ username: username });
     if(user && user.pass === password) {
@@ -142,17 +142,10 @@ app.post('/login', async (req, res) => {
     }
 });
 
-
-// =============================================
-// ✅ ADMIN PROFILE APIs (নতুন যুক্ত করা হয়েছে)
-// =============================================
-
-// Get Admin Profile
-app.get('/admin-profile', async (req, res) => {
+// Admin Profile APIs
+app.get('/api/admin-profile', async (req, res) => {
     try {
         let admin = await AdminModel.findOne();
-        
-        // যদি কোনো Admin ডাটা না থাকে, তাহলে ডিফল্ট তৈরি করবে
         if (!admin) {
             admin = await AdminModel.create({
                 name: 'Mehedi Hasan',
@@ -162,23 +155,18 @@ app.get('/admin-profile', async (req, res) => {
                 role: 'Admin'
             });
         }
-        
         res.json(admin);
     } catch (error) {
-        console.error("Admin Profile Get Error:", error);
         res.status(500).json({ error: 'Failed to get admin profile' });
     }
 });
 
-// Update Admin Profile
-app.put('/admin-profile', async (req, res) => {
+app.put('/api/admin-profile', async (req, res) => {
     try {
         const { name, email, phone, avatar } = req.body;
-        
         let admin = await AdminModel.findOne();
         
         if (!admin) {
-            // Admin না থাকলে নতুন তৈরি হবে
             admin = await AdminModel.create({
                 name: name || 'Mehedi Hasan',
                 email: email || '',
@@ -187,55 +175,41 @@ app.put('/admin-profile', async (req, res) => {
                 role: 'Admin'
             });
         } else {
-            // আপডেট করবে
             admin.name = name || admin.name;
             admin.email = email || admin.email;
             admin.phone = phone || admin.phone;
-            if (avatar !== undefined) {
-                admin.avatar = avatar;
-            }
+            if (avatar !== undefined) admin.avatar = avatar;
             await admin.save();
         }
-        
         res.json(admin);
     } catch (error) {
-        console.error("Admin Profile Update Error:", error);
         res.status(500).json({ error: 'Failed to update profile' });
     }
 });
 
-// Change Password
-app.put('/change-password', async (req, res) => {
+app.put('/api/change-password', async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
+        // ডিফল্ট admin ইউজার খোঁজা হচ্ছে, প্রয়োজনে আপনার ডাটাবেসের ইউজারনেম অনুযায়ী এটি চেঞ্জ করতে পারেন
+        const user = await UserModel.findOne(); 
         
-        // User খুঁজে বের করা (ডিফল্ট admin ইউজার)
-        const user = await UserModel.findOne({ username: 'admin' });
+        if (!user) return res.status(404).json({ error: 'User not found' });
         
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        
-        // Current Password চেক করা
         if (user.pass !== currentPassword) {
             return res.status(400).json({ error: 'Current password is incorrect' });
         }
         
-        // নতুন পাসওয়ার্ড সেট করা
         user.pass = newPassword;
         await user.save();
         
         res.json({ message: 'Password changed successfully' });
     } catch (error) {
-        console.error("Change Password Error:", error);
         res.status(500).json({ error: 'Failed to change password' });
     }
 });
 
-
-// --- Product APIs ---
-
-app.post('/add-product', async (req, res) => {
+// Product APIs
+app.post('/api/add-product', async (req, res) => {
     try {
         const newProduct = await ProductModel.create(req.body);
         res.json({ status: "Success", data: newProduct });
@@ -244,7 +218,7 @@ app.post('/add-product', async (req, res) => {
     }
 });
 
-app.get('/products', async (req, res) => {
+app.get('/api/products', async (req, res) => {
     try {
         const products = await ProductModel.find().sort({ date: -1 });
         res.json(products);
@@ -253,29 +227,26 @@ app.get('/products', async (req, res) => {
     }
 });
 
-app.put('/update-product/:id', async (req, res) => {
+app.put('/api/update-product/:id', async (req, res) => {
     try {
-        const { id } = req.params;
-        const updatedProduct = await ProductModel.findByIdAndUpdate(id, req.body, { new: true });
+        const updatedProduct = await ProductModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.json({ status: "Success", data: updatedProduct });
     } catch (err) {
         res.json({ status: "Error", error: err.message });
     }
 });
 
-app.delete('/delete-product/:id', async (req, res) => {
+app.delete('/api/delete-product/:id', async (req, res) => {
     try {
-        const { id } = req.params;
-        await ProductModel.findByIdAndDelete(id);
+        await ProductModel.findByIdAndDelete(req.params.id);
         res.json({ status: "Success" });
     } catch (err) {
         res.json({ status: "Error", error: err.message });
     }
 });
 
-// --- Customer APIs ---
-
-app.post('/add-customer', async (req, res) => {
+// Customer APIs
+app.post('/api/add-customer', async (req, res) => {
     try {
         const newCustomer = await CustomerModel.create(req.body);
         res.json({ status: "Success", data: newCustomer });
@@ -284,7 +255,7 @@ app.post('/add-customer', async (req, res) => {
     }
 });
 
-app.get('/customers', async (req, res) => {
+app.get('/api/customers', async (req, res) => {
     try {
         const customers = await CustomerModel.find().sort({ date: -1 });
         res.json(customers);
@@ -293,24 +264,22 @@ app.get('/customers', async (req, res) => {
     }
 });
 
-app.put('/update-customer/:id', async (req, res) => {
+app.put('/api/update-customer/:id', async (req, res) => {
     try {
         const updated = await CustomerModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.json({ status: "Success", data: updated });
     } catch (err) { res.json({ status: "Error", error: err.message }); }
 });
 
-app.delete('/delete-customer/:id', async (req, res) => {
+app.delete('/api/delete-customer/:id', async (req, res) => {
     try {
         await CustomerModel.findByIdAndDelete(req.params.id);
         res.json({ status: "Success" });
     } catch (err) { res.json({ status: "Error", error: err.message }); }
 });
 
-
-// --- 4. INVOICE API ---
-
-app.post('/create-invoice', async (req, res) => {
+// Invoice APIs
+app.post('/api/create-invoice', async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
@@ -332,10 +301,7 @@ app.post('/create-invoice', async (req, res) => {
             invoiceNo: invoiceNo,
             customer: customer,
             items: items,
-            payment: {
-                ...payment,
-                history: initialHistory 
-            }
+            payment: { ...payment, history: initialHistory }
         });
 
         await newInvoice.save({ session });
@@ -351,49 +317,33 @@ app.post('/create-invoice', async (req, res) => {
 
         await session.commitTransaction();
         session.endSession();
-        
         res.json({ status: "Success", data: newInvoice });
 
     } catch (err) {
         await session.abortTransaction();
         session.endSession();
-        console.error("Invoice Create Error:", err);
         res.status(500).json({ status: "Error", error: err.message });
     }
 });
 
-app.put('/update-invoice/:id', async (req, res) => {
+app.put('/api/update-invoice/:id', async (req, res) => {
     try {
         const { customer, items, payment } = req.body;
-        
         const existingInvoice = await InvoiceModel.findById(req.params.id);
-        
-        let updatedHistory = payment.history;
-
-        if (!updatedHistory && existingInvoice) {
-             updatedHistory = existingInvoice.payment.history;
-        }
+        let updatedHistory = payment.history || (existingInvoice ? existingInvoice.payment.history : []);
 
         const updatedInvoice = await InvoiceModel.findByIdAndUpdate(
             req.params.id,
-            { 
-                customer, 
-                items, 
-                payment: {
-                    ...payment,
-                    history: updatedHistory
-                } 
-            },
+            { customer, items, payment: { ...payment, history: updatedHistory } },
             { new: true }
         );
         res.json({ status: "Success", data: updatedInvoice });
     } catch (err) {
-        console.error("Update Error:", err);
         res.status(500).json({ status: "Error", error: err.message });
     }
 });
 
-app.get('/invoices', async (req, res) => {
+app.get('/api/invoices', async (req, res) => {
     try {
         const invoices = await InvoiceModel.find().sort({ createdAt: -1 });
         res.json(invoices);
@@ -402,7 +352,7 @@ app.get('/invoices', async (req, res) => {
     }
 });
 
-app.get('/due-invoices', async (req, res) => {
+app.get('/api/due-invoices', async (req, res) => {
     try {
         const dues = await InvoiceModel.find({ "payment.due": { $gt: 0 } }).sort({ createdAt: -1 });
         res.json(dues);
@@ -411,7 +361,7 @@ app.get('/due-invoices', async (req, res) => {
     }
 });
 
-app.delete('/delete-invoice/:id', async (req, res) => {
+app.delete('/api/delete-invoice/:id', async (req, res) => {
     try {
         await InvoiceModel.findByIdAndDelete(req.params.id);
         res.json({ status: 'Success' });
@@ -420,13 +370,10 @@ app.delete('/delete-invoice/:id', async (req, res) => {
     }
 });
 
-
-// --- 5. QUOTATION API ---
-
-app.post('/create-quotation', async (req, res) => {
+// Quotation APIs
+app.post('/api/create-quotation', async (req, res) => {
     try {
         const { customer, items, payment } = req.body;
-        
         const count = await QuotationModel.countDocuments();
         const quotationNo = "QT-" + (1000 + count + 1);
 
@@ -438,33 +385,26 @@ app.post('/create-quotation', async (req, res) => {
         });
 
         await newQuotation.save();
-        
         res.json({ status: "Success", data: newQuotation });
-
     } catch (err) {
-        console.error("Quotation Create Error:", err);
         res.status(500).json({ status: "Error", error: err.message });
     }
 });
 
-app.put('/update-quotation/:id', async (req, res) => {
+app.put('/api/update-quotation/:id', async (req, res) => {
     try {
-        const { customer, items, payment } = req.body;
-        
         const updatedQuotation = await QuotationModel.findByIdAndUpdate(
             req.params.id,
-            { customer, items, payment },
+            req.body,
             { new: true }
         );
-        
         res.json({ status: "Success", data: updatedQuotation });
     } catch (err) {
-        console.error("Quotation Update Error:", err);
         res.status(500).json({ status: "Error", error: err.message });
     }
 });
 
-app.get('/quotations', async (req, res) => {
+app.get('/api/quotations', async (req, res) => {
     try {
         const quotations = await QuotationModel.find().sort({ createdAt: -1 });
         res.json(quotations);
@@ -473,7 +413,7 @@ app.get('/quotations', async (req, res) => {
     }
 });
 
-app.delete('/delete-quotation/:id', async (req, res) => {
+app.delete('/api/delete-quotation/:id', async (req, res) => {
     try {
         await QuotationModel.findByIdAndDelete(req.params.id);
         res.json({ status: 'Success' });
@@ -486,6 +426,7 @@ app.delete('/delete-quotation/:id', async (req, res) => {
 // --- 6. Server Frontend (For Render) ---
 app.use(express.static(path.join(__dirname, '../dist')));
 
+// ✅ WILDCARD ROUTE (Must be at the very end)
 app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });

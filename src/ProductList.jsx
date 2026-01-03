@@ -17,7 +17,7 @@ const ProductList = () => {
   const [isEditOpen, setIsEditOpen] = useState(false); 
   const [editFormData, setEditFormData] = useState(null); 
   const [processing, setProcessing] = useState(false); 
-  const [successToast, setSuccessToast] = useState(null); // ✅ টোস্ট স্টেট
+  const [successToast, setSuccessToast] = useState(null); 
 
   useEffect(() => {
     fetchProducts();
@@ -25,7 +25,8 @@ const ProductList = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get('/products');
+      // ✅ FIX: Added /api prefix
+      const res = await axios.get('/api/products');
       const data = res.data;
       setProducts(data);
       calculateStats(data);
@@ -43,7 +44,6 @@ const ProductList = () => {
     setStats({ totalItems, totalValue, lowStock });
   };
 
-  // ✅ ফ্ল্যাশ ম্যাসেজ ফাংশন
   const showSuccess = (msg) => {
     setSuccessToast(msg);
     setTimeout(() => setSuccessToast(null), 3000);
@@ -54,12 +54,13 @@ const ProductList = () => {
   const executeDelete = async () => {
     setProcessing(true);
     try {
-      await axios.delete(`/delete-product/${deleteId}`);
+      // ✅ FIX: Added /api prefix
+      await axios.delete(`/api/delete-product/${deleteId}`);
       const updatedList = products.filter(p => p._id !== deleteId);
       setProducts(updatedList);
       calculateStats(updatedList);
       setDeleteId(null); 
-      showSuccess("Product Deleted Successfully!"); // ✅ ম্যাসেজ কল
+      showSuccess("Product Deleted Successfully!"); 
     } catch (err) {
       alert("Failed to delete product!");
     }
@@ -81,14 +82,15 @@ const ProductList = () => {
 
     setProcessing(true);
     try {
-      const res = await axios.put(`/update-product/${editFormData._id}`, editFormData);
+      // ✅ FIX: Added /api prefix
+      const res = await axios.put(`/api/update-product/${editFormData._id}`, editFormData);
       if(res.data) {
           const updatedList = products.map(p => p._id === editFormData._id ? editFormData : p);
           setProducts(updatedList);
           calculateStats(updatedList);
           setIsEditOpen(false); 
           setEditFormData(null);
-          showSuccess("Product Updated Successfully!"); // ✅ ম্যাসেজ কল
+          showSuccess("Product Updated Successfully!"); 
       }
     } catch (err) { alert("Failed to update!"); }
     setProcessing(false);
@@ -99,7 +101,6 @@ const ProductList = () => {
     item.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Status Badge Component
   const StatusBadge = ({ stock }) => {
     const s = Number(stock);
     if (s === 0) return <div className="flex items-center gap-1.5 text-red-600 bg-red-50 px-2.5 py-1 rounded-md text-[11px] font-bold border border-red-100 w-fit whitespace-nowrap"><XCircle className="w-3 h-3"/> Out</div>;
@@ -110,7 +111,6 @@ const ProductList = () => {
   return (
     <div className="space-y-6 pb-10 relative font-sans text-slate-800">
       
-      {/* --- ✅ CLEAN FLASH MESSAGE (Toast) --- */}
       <AnimatePresence>
         {successToast && (
           <motion.div 
@@ -125,7 +125,6 @@ const ProductList = () => {
         )}
       </AnimatePresence>
 
-      {/* --- HEADER & SUMMARY --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
               <div><p className="text-xs font-bold text-gray-400 uppercase">Total Products</p><h3 className="text-2xl font-black text-slate-800">{stats.totalItems}</h3></div>
@@ -141,7 +140,6 @@ const ProductList = () => {
           </div>
       </div>
 
-      {/* --- SEARCH --- */}
       <div className="bg-white border border-gray-200 p-4 rounded-2xl shadow-sm flex items-center gap-3">
         <Search className="w-5 h-5 text-gray-400 ml-2" />
         <input 
@@ -153,7 +151,6 @@ const ProductList = () => {
         />
       </div>
 
-      {/* --- TABLE --- */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         
         {loading && <div className="p-12 text-center text-gray-500 font-medium">Loading Inventory...</div>}
@@ -185,7 +182,6 @@ const ProductList = () => {
                     key={item._id} 
                     className="hover:bg-gray-50/60 transition-colors group"
                   >
-                    {/* ✅ Product Name - Fixed Width & Truncated */}
                     <td className="px-6 py-4 first:pl-8">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-slate-400 border border-gray-200 shrink-0">
@@ -232,7 +228,6 @@ const ProductList = () => {
         )}
       </div>
 
-      {/* --- ✅ DELETE MODAL (Same as CustomerList) --- */}
       <AnimatePresence>
         {deleteId && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
@@ -251,7 +246,6 @@ const ProductList = () => {
         )}
       </AnimatePresence>
 
-      {/* --- EDIT MODAL (Clean Design) --- */}
       <AnimatePresence>
         {isEditOpen && editFormData && (
           <div className="fixed inset-0 bg-slate-900/20 z-[9999] flex items-center justify-center backdrop-blur-sm p-4">
