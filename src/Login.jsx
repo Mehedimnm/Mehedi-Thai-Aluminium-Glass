@@ -126,7 +126,8 @@ const Login = ({ onLogin }) => {
     setIsLoading(true);
     
     try {
-      const res = await axios.post('/login', formData);
+      // ✅ শুধুমাত্র এই লাইনটি ফিক্স করা হয়েছে (/login -> /api/login)
+      const res = await axios.post('/api/login', formData);
       if (res.data === 'Success') {
         showToast('success', 'Login successful! Redirecting...');
         setTimeout(() => onLogin(), 1500);
