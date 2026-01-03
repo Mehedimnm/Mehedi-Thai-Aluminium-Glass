@@ -6,7 +6,6 @@ import {
   X, Save, Users, CheckCircle, Filter, Plus 
 } from 'lucide-react';
 
-// ✅ onAddNew প্রপ রিসিভ করা হলো
 const CustomerList = ({ onAddNew }) => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +19,8 @@ const CustomerList = ({ onAddNew }) => {
   const fetchCustomers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/customers');
+      // ✅ FIX: Added /api prefix
+      const response = await axios.get('/api/customers');
       setCustomers(response.data);
     } catch (err) {
       setError("Failed to load customer data.");
@@ -39,7 +39,8 @@ const CustomerList = ({ onAddNew }) => {
 
   const executeDelete = async () => {
     try {
-      await axios.delete(`/delete-customer/${deleteId}`);
+      // ✅ FIX: Added /api prefix
+      await axios.delete(`/api/delete-customer/${deleteId}`);
       setDeleteId(null);
       fetchCustomers();
       showSuccess("Customer Deleted Successfully!");
@@ -52,7 +53,8 @@ const CustomerList = ({ onAddNew }) => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`/update-customer/${editingCustomer._id}`, editingCustomer);
+      // ✅ FIX: Added /api prefix
+      await axios.put(`/api/update-customer/${editingCustomer._id}`, editingCustomer);
       setEditingCustomer(null);
       fetchCustomers();
       showSuccess("Customer Profile Updated!");
@@ -122,7 +124,6 @@ const CustomerList = ({ onAddNew }) => {
                 />
             </div>
             
-            {/* ✅ Add New Button */}
             <button 
                 onClick={onAddNew}
                 className="bg-slate-900 hover:bg-slate-800 text-white p-3 rounded-xl shadow-lg shadow-slate-900/20 transition active:scale-95 flex items-center gap-2 font-bold"
@@ -163,7 +164,6 @@ const CustomerList = ({ onAddNew }) => {
                     key={customer._id} 
                     className="hover:bg-gray-50/60 transition-colors group"
                   >
-                    {/* Client Name & Avatar */}
                     <td className="px-6 py-4 first:pl-8">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 bg-gray-50 shrink-0">
@@ -179,7 +179,6 @@ const CustomerList = ({ onAddNew }) => {
                           <h3 className="font-bold text-slate-900 text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] md:max-w-[200px]" title={customer.name}>
                               {customer.name}
                           </h3>
-                          {/* ✅ Active Status with Green Dot */}
                           <div className="flex items-center gap-1.5 mt-0.5">
                              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
                              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Active</span>
@@ -220,7 +219,6 @@ const CustomerList = ({ onAddNew }) => {
         )}
       </div>
 
-      {/* --- DELETE MODAL --- */}
       <AnimatePresence>
         {deleteId && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
@@ -237,7 +235,6 @@ const CustomerList = ({ onAddNew }) => {
         )}
       </AnimatePresence>
 
-      {/* --- EDIT MODAL --- */}
       <AnimatePresence>
       {editingCustomer && (
         <div className="fixed inset-0 bg-slate-900/20 z-[9999] flex items-center justify-center backdrop-blur-sm p-4">

@@ -114,7 +114,8 @@ const AddProduct = () => {
         stock: formData.stock === '' ? 0 : formData.stock
       };
 
-      const response = await axios.post('/add-product', dataToSend);
+      // ✅ FIX: Added /api prefix
+      const response = await axios.post('/api/add-product', dataToSend);
       
       if (response.data.status === 'Success') {
         showMessage('success', 'Product Added Successfully!');

@@ -23,7 +23,6 @@ const AddCustomer = () => {
     e.preventDefault();
     setMessage(null);
 
-    // ১. নাম ফাঁকা কি না চেক
     if(!formData.name.trim()) {
        showMessage('error', 'Customer Name is required!');
        return;
@@ -32,8 +31,8 @@ const AddCustomer = () => {
     setLoading(true);
 
     try {
-      // ২. ডুপ্লিকেট চেক
-      const checkRes = await axios.get('/customers');
+      // ✅ FIX: Added /api prefix
+      const checkRes = await axios.get('/api/customers');
       const existingCustomers = checkRes.data;
 
       const isNameDuplicate = existingCustomers.some(c => c.name.toLowerCase() === formData.name.trim().toLowerCase());
@@ -51,8 +50,8 @@ const AddCustomer = () => {
         return;
       }
 
-      // ৩. সেভ করা - ✅ এখানে fix করা হয়েছে
-      const response = await axios.post('/add-customer', formData);
+      // ✅ FIX: Added /api prefix
+      const response = await axios.post('/api/add-customer', formData);
       if (response.data.status === 'Success') {
         showMessage('success', 'Customer Added Successfully!');
         setFormData({ name: '', mobile: '', address: '' }); 
@@ -70,7 +69,6 @@ const AddCustomer = () => {
     setTimeout(() => setMessage(null), 3000);
   };
 
-  // Avatar Generator Helper
   const getAvatar = (name) => {
       const safeName = name ? name.trim() : 'User';
       const seed = encodeURIComponent(safeName);
@@ -80,7 +78,6 @@ const AddCustomer = () => {
   return (
     <div className="flex justify-center items-start min-h-[calc(100vh-100px)] pb-10 font-sans text-slate-800">
       
-      {/* --- FLASH MESSAGE (Toast) --- */}
       <AnimatePresence>
         {message && (
           <motion.div 
@@ -97,9 +94,7 @@ const AddCustomer = () => {
 
       <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* --- বাম পাশ: ফর্ম --- */}
         <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl shadow-sm p-6 md:p-8">
-          
           <div className="mb-8 border-b border-gray-100 pb-4">
             <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
               <UserPlus className="w-6 h-6 text-slate-700" />
@@ -109,8 +104,6 @@ const AddCustomer = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            
-            {/* Customer Name */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase ml-1 flex items-center gap-1">
                 Customer Name <span className="text-red-500">*</span>
@@ -126,7 +119,6 @@ const AddCustomer = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Mobile Number */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase ml-1">Mobile Number</label>
                 <div className="relative group">
@@ -139,7 +131,6 @@ const AddCustomer = () => {
                 </div>
               </div>
 
-              {/* Address */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase ml-1">Address</label>
                 <div className="relative group">
@@ -153,7 +144,6 @@ const AddCustomer = () => {
               </div>
             </div>
 
-            {/* Buttons */}
             <div className="pt-6 flex gap-4 border-t border-gray-100 mt-4">
               <button 
                 type="button"
@@ -178,22 +168,18 @@ const AddCustomer = () => {
           </form>
         </div>
 
-        {/* --- ডান পাশ: লাইভ প্রিভিউ কার্ড --- */}
         <div className="hidden lg:block lg:col-span-1">
           <div className="sticky top-6">
             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <ScanBarcode className="w-4 h-4"/> Live Preview
             </h3>
             
-            {/* The Card */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-10">
                 <Contact className="w-24 h-24 text-slate-900"/>
               </div>
 
               <div className="relative z-10 flex flex-col items-center text-center">
-                
-                {/* Avatar */}
                 <div className="w-20 h-20 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-50 mb-4">
                     <img 
                         src={getAvatar(formData.name)} 
@@ -236,7 +222,6 @@ const AddCustomer = () => {
               </div>
             </div>
 
-            {/* Hint Box */}
             <div className="mt-6 bg-slate-50 border border-slate-100 rounded-xl p-4">
               <h4 className="font-bold text-slate-600 mb-1 text-xs uppercase flex items-center gap-1">
                 <CheckCircle className="w-3 h-3"/> Quick Tip

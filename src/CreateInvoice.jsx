@@ -96,7 +96,6 @@ const CreateInvoice = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // ✅ Fix: useLocation থেকে editData নেওয়া হচ্ছে
   const editData = location.state?.editData || null;
   
   const [products, setProducts] = useState([]);
@@ -136,9 +135,10 @@ const CreateInvoice = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // ✅ FIX: Added /api prefix
         const [prodRes, custRes] = await axios.all([
-          axios.get('/products'), 
-          axios.get('/customers')
+          axios.get('/api/products'), 
+          axios.get('/api/customers')
         ]);
         setProducts(Array.isArray(prodRes.data) ? prodRes.data : []); 
         setCustomers(Array.isArray(custRes.data) ? custRes.data : []);
@@ -164,7 +164,6 @@ const CreateInvoice = () => {
     }
   }, [editData, customers]);
 
-  // বিবরণ সিলেকশন হ্যান্ডলার
   const handleDescSelection = (itemName) => {
     if (selectedDescItems.includes(itemName)) {
         setSelectedDescItems(selectedDescItems.filter(i => i !== itemName));
@@ -173,23 +172,18 @@ const CreateInvoice = () => {
     }
   };
 
-  // বিবরণ ইনসার্ট করা (* মার্ক দিয়ে)
   const insertDescription = () => {
     if (selectedDescItems.length === 0) {
         setShowDescModal(false);
         return;
     }
-    
     const formattedText = selectedDescItems.map(item => `* ${item}`).join('\n');
-    
     setDescription(prev => prev ? prev + '\n' + formattedText : formattedText);
-    
     setSelectedDescItems([]); 
     setShowDescModal(false);
     setModalSearch('');
   };
 
-  // পপআপের ফিল্টার করা প্রোডাক্ট লিস্ট
   const filteredModalProducts = products.filter(p => 
     p.name.toLowerCase().includes(modalSearch.toLowerCase())
   );
@@ -243,7 +237,8 @@ const CreateInvoice = () => {
           payment: { subTotal, discount, grandTotal, paid, due, method: paymentMethod } 
       };
       
-      const res = await axios.post('/create-invoice', invoiceData);
+      // ✅ FIX: Added /api prefix
+      const res = await axios.post('/api/create-invoice', invoiceData);
       
       if (res.data.status === 'Success') {
         const newData = res.data.data;
@@ -271,7 +266,8 @@ const CreateInvoice = () => {
           payment: { subTotal, discount, grandTotal, paid, due, method: paymentMethod } 
       };
       
-      const res = await axios.put(`/update-invoice/${editingInvoiceId}`, invoiceData);
+      // ✅ FIX: Added /api prefix
+      const res = await axios.put(`/api/update-invoice/${editingInvoiceId}`, invoiceData);
       if(res.data.status === "Success") { showMessage('success', 'Updated Successfully!'); } 
       else { showMessage('error', 'Update Failed!'); }
     } catch (err) { showMessage('error', 'Server Error!'); }
@@ -298,7 +294,6 @@ const CreateInvoice = () => {
       setSelectedCustomer(''); 
       setEditingInvoiceId(null); 
       setCurrentInvoiceNo(null);
-      // ✅ Fix: Clear the location state when resetting
       navigate('/create-invoice', { replace: true });
   };
   
@@ -344,7 +339,6 @@ const CreateInvoice = () => {
                     </h3>
                     <button onClick={() => setShowDescModal(false)} className="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition"><XCircle className="w-5 h-5 text-gray-500"/></button>
                 </div>
-                {/* Search in Modal */}
                 <div className="relative">
                     <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400"/>
                     <input 

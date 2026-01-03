@@ -96,7 +96,6 @@ const CreateQuotation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // ✅ Fix: useLocation থেকে editData নেওয়া হচ্ছে
   const editData = location.state?.editData || null;
   
   const [products, setProducts] = useState([]);
@@ -129,9 +128,10 @@ const CreateQuotation = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // ✅ FIX: Added /api prefix
         const [prodRes, custRes] = await axios.all([
-          axios.get('/products'), 
-          axios.get('/customers')
+          axios.get('/api/products'), 
+          axios.get('/api/customers')
         ]);
         setProducts(Array.isArray(prodRes.data) ? prodRes.data : []); 
         setCustomers(Array.isArray(custRes.data) ? custRes.data : []);
@@ -230,7 +230,8 @@ const CreateQuotation = () => {
           payment: { subTotal, discount, grandTotal, paid: 0, due: grandTotal } 
       };
       
-      const res = await axios.post('/create-quotation', quotationData);
+      // ✅ FIX: Added /api prefix
+      const res = await axios.post('/api/create-quotation', quotationData);
       
       if (res.data.status === 'Success') {
         const newData = res.data.data;
@@ -258,7 +259,8 @@ const CreateQuotation = () => {
           payment: { subTotal, discount, grandTotal, paid: 0, due: grandTotal } 
       };
       
-      const res = await axios.put(`/update-quotation/${editingQuotationId}`, quotationData);
+      // ✅ FIX: Added /api prefix
+      const res = await axios.put(`/api/update-quotation/${editingQuotationId}`, quotationData);
       if(res.data.status === "Success") { showMessage('success', 'Updated Successfully!'); } 
       else { showMessage('error', 'Update Failed!'); }
     } catch (err) { showMessage('error', 'Server Error!'); }
@@ -284,7 +286,6 @@ const CreateQuotation = () => {
       setSelectedCustomer(''); 
       setEditingQuotationId(null); 
       setCurrentQuotationNo(null);
-      // ✅ Fix: Clear the location state when resetting
       navigate('/create-quotation', { replace: true });
   };
   

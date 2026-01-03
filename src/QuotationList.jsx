@@ -22,7 +22,8 @@ const QuotationList = () => {
 
   const fetchQuotations = async () => {
     try {
-      const res = await axios.get('/quotations');
+      // ✅ FIX: Added /api prefix
+      const res = await axios.get('/api/quotations');
       setQuotations(res.data);
       setLoading(false);
     } catch (err) {
@@ -39,7 +40,8 @@ const QuotationList = () => {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await axios.delete(`/delete-quotation/${deleteId}`);
+      // ✅ FIX: Added /api prefix
+      await axios.delete(`/api/delete-quotation/${deleteId}`);
       setQuotations(quotations.filter(q => q._id !== deleteId));
       setDeleteId(null);
       showMessage('success', 'Quotation Deleted Successfully!');
@@ -58,7 +60,6 @@ const QuotationList = () => {
     });
   };
 
-  // ✅ Fix: Edit handler - navigate to create-quotation with state
   const handleEdit = (quotation) => {
     navigate('/create-quotation', { state: { editData: quotation } });
   };
@@ -120,11 +121,9 @@ const QuotationList = () => {
       </div>
 
       {/* --- TABLE AREA --- */}
-      {/* ✅ Fix: p-2 সরিয়ে দেওয়া হয়েছে যাতে gap না থাকে */}
       <div className="flex-1 overflow-auto custom-scrollbar">
         
         <table className="w-full text-left border-collapse min-w-[900px]">
-          {/* ✅ Fix: shadow-sm যোগ করা হয়েছে এবং প্রতিটি th তে bg-gray-50 */}
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-50 border-b border-gray-200 shadow-sm">
               <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap first:pl-8 bg-gray-50">Date & ID</th>
@@ -173,7 +172,6 @@ const QuotationList = () => {
                       <button onClick={() => handlePrint(item)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition border border-transparent hover:border-gray-200">
                         <Printer className="w-4 h-4" />
                       </button>
-                      {/* ✅ Fix: Edit button */}
                       <button onClick={() => handleEdit(item)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition border border-transparent hover:border-gray-200">
                         <Pencil className="w-4 h-4" />
                       </button>

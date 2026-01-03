@@ -23,7 +23,8 @@ const InvoiceList = ({ onEdit }) => {
 
   const fetchInvoices = async () => {
     try {
-      const res = await axios.get('/invoices');
+      // ✅ FIX: Added /api prefix
+      const res = await axios.get('/api/invoices');
       setInvoices(res.data);
       setLoading(false);
     } catch (err) {
@@ -40,7 +41,8 @@ const InvoiceList = ({ onEdit }) => {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await axios.delete(`/delete-invoice/${deleteId}`);
+      // ✅ FIX: Added /api prefix
+      await axios.delete(`/api/delete-invoice/${deleteId}`);
       setInvoices(invoices.filter(inv => inv._id !== deleteId));
       setDeleteId(null);
       showMessage('success', 'Invoice Deleted Successfully!');
@@ -58,7 +60,6 @@ const InvoiceList = ({ onEdit }) => {
     });
   };
 
-  // ✅ Fix: Edit handler - navigate to create-invoice with state
   const handleEdit = (invoice) => {
     navigate('/create-invoice', { state: { editData: invoice } });
   };
@@ -120,12 +121,9 @@ const InvoiceList = ({ onEdit }) => {
       </div>
 
       {/* --- TABLE AREA --- */}
-      {/* ✅ Fix: p-2 সরিয়ে দেওয়া হয়েছে যাতে gap না থাকে */}
       <div className="flex-1 overflow-auto custom-scrollbar">
         
-        {/* min-w-[1100px] to accommodate new column */}
         <table className="w-full text-left border-collapse min-w-[1100px]">
-          {/* ✅ Fix: bg-white যোগ করা হয়েছে এবং shadow দেওয়া হয়েছে */}
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-50 border-b border-gray-200 shadow-sm">
               <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap first:pl-8 bg-gray-50">Date & ID</th>
@@ -170,12 +168,12 @@ const InvoiceList = ({ onEdit }) => {
                     <span className="font-bold text-slate-900">৳ {item.payment?.grandTotal?.toLocaleString()}</span>
                   </td>
 
-                  {/* ✅ PAID AMOUNT (New Column) */}
+                  {/* Paid Amount */}
                   <td className="px-6 py-4 text-right whitespace-nowrap">
                     <span className="font-bold text-emerald-600">৳ {item.payment?.paid?.toLocaleString() || 0}</span>
                   </td>
 
-                  {/* Status (Minimal) */}
+                  {/* Status */}
                   <td className="px-6 py-4 text-center whitespace-nowrap">
                     {item.payment?.due > 0 ? (
                         <div className="flex items-center justify-center gap-1.5 text-red-500 font-bold text-xs uppercase tracking-wide">
@@ -194,7 +192,6 @@ const InvoiceList = ({ onEdit }) => {
                       <button onClick={() => handlePrint(item)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition border border-transparent hover:border-gray-200">
                         <Printer className="w-4 h-4" />
                       </button>
-                      {/* ✅ Fix: Edit button */}
                       <button onClick={() => handleEdit(item)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition border border-transparent hover:border-gray-200">
                         <Pencil className="w-4 h-4" />
                       </button>

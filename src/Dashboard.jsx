@@ -117,7 +117,8 @@ const Dashboard = ({ onLogout }) => {
   useEffect(() => {
     const fetchAdminProfile = async () => {
       try {
-        const res = await axios.get('/admin-profile');
+        // ✅ FIX: Added /api prefix
+        const res = await axios.get('/api/admin-profile');
         setAdminData(res.data);
       } catch (error) {
         console.error('Failed to fetch admin profile:', error);
@@ -162,11 +163,12 @@ const Dashboard = ({ onLogout }) => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        // ✅ FIX: Added /api prefix to all endpoints
         const [prodRes, custRes, invRes, quotRes] = await Promise.all([
-          axios.get('/products'),
-          axios.get('/customers'),
-          axios.get('/invoices'),
-          axios.get('/quotations')
+          axios.get('/api/products'),
+          axios.get('/api/customers'),
+          axios.get('/api/invoices'),
+          axios.get('/api/quotations')
         ]);
 
         const products = prodRes.data;
@@ -281,7 +283,8 @@ const Dashboard = ({ onLogout }) => {
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
-      const res = await axios.put('/admin-profile', profileForm);
+      // ✅ FIX: Added /api prefix
+      const res = await axios.put('/api/admin-profile', profileForm);
       setAdminData(res.data);
       showToast('success', 'Profile updated successfully!');
       handleCloseProfileModal();
@@ -304,7 +307,8 @@ const Dashboard = ({ onLogout }) => {
 
     setSaving(true);
     try {
-      await axios.put('/change-password', {
+      // ✅ FIX: Added /api prefix
+      await axios.put('/api/change-password', {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });

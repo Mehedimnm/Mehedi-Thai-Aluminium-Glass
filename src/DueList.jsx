@@ -96,7 +96,8 @@ const DueList = () => {
   const fetchDueInvoices = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('/invoices');
+      // ✅ FIX: Added /api prefix
+      const res = await axios.get('/api/invoices');
       const dueData = res.data.filter(inv => inv.payment?.due > 0);
       setInvoices(dueData);
     } catch (err) {
@@ -144,7 +145,6 @@ const DueList = () => {
         const newPaid = prevPaid + payAmount;
         const newDue = Number(selectedInvoice.payment.grandTotal) - newPaid;
 
-        // ✅ FIXED: Date format updated for consistency
         const newHistoryRecord = {
             date: new Date().toISOString(), 
             amount: payAmount,
@@ -161,11 +161,12 @@ const DueList = () => {
                 paid: newPaid,
                 due: newDue,
                 method: collectionData.method,
-                history: [...previousHistory, newHistoryRecord] // Adding to history
+                history: [...previousHistory, newHistoryRecord] 
             }
         };
 
-        const res = await axios.put(`/update-invoice/${selectedInvoice._id}`, updatedInvoice);
+        // ✅ FIX: Added /api prefix
+        const res = await axios.put(`/api/update-invoice/${selectedInvoice._id}`, updatedInvoice);
 
         if (res.data.status === "Success") {
             showSuccess('Payment Collected Successfully!');
@@ -181,7 +182,8 @@ const DueList = () => {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await axios.delete(`/delete-invoice/${deleteId}`);
+      // ✅ FIX: Added /api prefix
+      await axios.delete(`/api/delete-invoice/${deleteId}`);
       setInvoices(invoices.filter(inv => inv._id !== deleteId));
       setDeleteId(null);
       showSuccess("Record Deleted!");
